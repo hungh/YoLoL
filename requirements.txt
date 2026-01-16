@@ -1,0 +1,6 @@
+kagglehub>=0.3.13
+numpy
+matplotlib
+opencv-python>=4.8.0
+PyYAML>=6.0.0
+pytorch>=2.9.1

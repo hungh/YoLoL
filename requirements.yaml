@@ -1,0 +1,17 @@
+name: torch12
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - matplotlib
+  - pyyaml>=6.0.0
+  - opencv
+  - pip:
+      - --pre
+      - --extra-index-url https://download.pytorch.org/whl/nightly/cu128
+      - torch
+      - torchvision
+      - torchaudio
+      - kagglehub>=0.3.13
