@@ -38,7 +38,7 @@ The model is a deep neural network with the following architecture:
 
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/yourusername/your-repo.git](https://github.com/yourusername/your-repo.git)
+   git clone [https://github.com/hungh/YoLoL](https://github.com/hungh/YoLoL)
    cd your-repo
 
 ## When to Use This Model
