@@ -111,6 +111,7 @@ def resize_with_padding(img, target_size=64):
 
 # ============================================================
 # Main Dataset Processing
+# TODO: need to write a function to process X, Y in batches instead as memory intensive
 # ============================================================
 
 def process_dataset(images_dir, labels_dir, target_size=64, max_images=-1):
