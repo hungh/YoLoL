@@ -109,46 +109,52 @@ def resize_with_padding(img, target_size=64):
     return padded
 
 
-# ============================================================
-# Main Dataset Processing
-# TODO: need to write a function to process X, Y in batches instead as memory intensive
-# ============================================================
-
-def process_dataset(images_dir, labels_dir, target_size=64, max_images=-1):
+def process_dataset_batches(image_paths, labels_dir, starting_image_path_index=0, target_size=64, batch_size = None) -> tuple[np.ndarray, np.ndarray]:
     """
-    Process all images and bounding boxes into a flattened dataset.
+    Process a single batch of images and their corresponding bounding boxes.
 
-    Parameters
+    Parameters:
     ----------
-    images_dir : str
-        Directory containing training images.
-    labels_dir : str
-        Directory containing YOLO label files.
-    target_size : int
-        Output size for each cropped object.
-
-    Returns
+        image_paths: list(str)
+            List of image paths.
+        labels_dir: str
+            Directory containing YOLO label files.
+        starting_image_path_index: int
+            Index of the first image path to process.
+        target_size: int
+            Output size for each cropped object.
+        batch_size: int
+            Number of images to process at once.
+      
+    Returns:
     -------
-    tuple
-        (X, Y) where:
-        - X: Array of shape (target_size*target_size*3, m) where m is the number of cropped objects
-        - Y: Array of shape (m, num_classes) containing multi-hot encoded labels
-    """    
+        tuple
+            (X, Y) where:            
+            - X: Array of shape (target_size*target_size*3, m) where m is the number of cropped objects
+            - Y: Array of shape (m, num_classes) containing multi-hot encoded labels
+    """
+
+    # validation of inputs
+    if starting_image_path_index < 0:
+        raise ValueError("starting_image_path_index must be non-negative")
+
+    if target_size <= 0:
+        raise ValueError("target_size must be positive")
+
+    if not image_paths:
+        raise ValueError("image_paths must not be empty")
+
+    if batch_size is None:
+        batch_size = len(image_paths)   
+    
     all_crops = []
     all_labels = []
-    print(f"Processing dataset from images_dir: {images_dir}, labels_dir: {labels_dir}")
-    image_paths = sorted(glob(os.path.join(images_dir, "*.jpg")) +
-                         glob(os.path.join(images_dir, "*.png")))
-    
-    if max_images > 0 and max_images < len(image_paths):
-        image_paths = image_paths[:max_images]
-        print(f"Limiting to loading {max_images} images")
-                    
-    print(f"Found {len(image_paths)} images in {images_dir}")
-    print(f"Labels directory: {labels_dir}")
+    end_index = min(starting_image_path_index + batch_size, len(image_paths))
+    batch_paths = image_paths[starting_image_path_index:end_index]
 
-    print(f"Processing image....")
-    for i, img_path in enumerate(image_paths):
+    print(f"Processing {len(batch_paths)} images (batch {starting_image_path_index//batch_size + 1})...")
+
+    for i, img_path in enumerate(batch_paths):        
         if i % 100 == 0:
             print(f"\nProcessed {i} images...", end='', flush=True)
         else:
@@ -213,6 +219,65 @@ def process_dataset(images_dir, labels_dir, target_size=64, max_images=-1):
 
     data_matrix = np.array(all_crops).T  # shape: (12288, m)
     return data_matrix, np.array(all_labels)
+    
+    
+# ============================================================
+# Main Dataset Processing.
+# NOTE: this function processes all images at once, which is memory intensive.
+# ============================================================
+
+def process_dataset(images_dir, labels_dir, target_size=64, max_images=-1):
+    """
+    Process all images and bounding boxes into a flattened dataset.
+
+    Parameters
+    ----------
+    images_dir : str
+        Directory containing training images.
+    labels_dir : str
+        Directory containing YOLO label files.
+    target_size : int
+        Output size for each cropped object.
+
+    Returns
+    -------
+    tuple
+        (X, Y) where:
+        - X: Array of shape (target_size*target_size*3, m) where m is the number of cropped objects
+        - Y: Array of shape (m, num_classes) containing multi-hot encoded labels
+    """        
+    print(f"Processing dataset from images_dir: {images_dir}, labels_dir: {labels_dir}")
+    image_paths = sorted(glob(os.path.join(images_dir, "*.jpg")) +
+                         glob(os.path.join(images_dir, "*.png")))
+    
+    if max_images > 0 and max_images < len(image_paths):
+        image_paths = image_paths[:max_images]
+        print(f"Limiting to loading {max_images} images")
+                    
+    print(f"Found {len(image_paths)} images in {images_dir}")
+    print(f"Labels directory: {labels_dir}")
+
+    print(f"Processing all images....")
+
+    batch_size = 1000    
+    X = []
+    Y = []
+    for batch_start in range(0, len(image_paths), batch_size):
+        batch_end = min(batch_start + batch_size, len(image_paths))
+        print(f"\nProcessing batch {batch_start//batch_size + 1}/{(len(image_paths)-1)//batch_size + 1} "
+                 f"(images {batch_start}-{batch_end-1})")
+        X_batch, Y_batch = process_dataset_batches(image_paths, labels_dir, starting_image_path_index = batch_start, target_size=target_size, batch_size = batch_size)
+
+        if X_batch is None or Y_batch is None:
+            continue
+        X.append(X_batch)
+        Y.append(Y_batch)
+    
+    if len(X) == 0 or len(Y) == 0:
+        print("Warning: No valid data found in the dataset")
+        return np.array([]).reshape((target_size*target_size*3, 0)), np.array([]).reshape((0, 63))  
+    
+    return np.concatenate(X, axis=1), np.concatenate(Y, axis=0)
 
 
 def scale_data(data_matrix, method='minmax'):
