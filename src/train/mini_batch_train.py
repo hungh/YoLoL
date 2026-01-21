@@ -91,7 +91,7 @@ def train_model(force=False):
     print(f"Number of classes: {num_classes}")
 
     # 3. Create DataLoader for Mini-batching
-    batch_size = 1000
+    batch_size = 1024
     dataset = TensorDataset(X_tensor, y_tensor)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
@@ -102,7 +102,7 @@ def train_model(force=False):
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # 6. Training Loop
-    max_iterations = 1024
+    max_iterations = 1000
     iterations = 0
     start_time = time.time()
     total_loss = 0.0

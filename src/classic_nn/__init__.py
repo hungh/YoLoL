@@ -170,7 +170,7 @@ def custom_model_forward(X: np.ndarray, parameters: dict, layer_names: list[str]
     L = len(parameters) // 2
 
     # check layer_names length
-    if len(layer_names) != L:
+    if len(layer_names) - 1 != L:
         raise ValueError(f"Layer names length {len(layer_names)} does not match parameters length {L}")
     
     for l in range(1, L + 1):
@@ -203,6 +203,13 @@ def  BCE_WithLogitsLoss(AL, Y, from_logits: bool = True) -> float:
     Returns:
         cost: cost value
     """
+    # ensure AL and Y are the same shape if
+    if AL.shape != Y.shape:
+        if AL.shape == Y.T.shape:
+            Y = Y.T
+        else:
+            raise ValueError(f"AL shape {AL.shape} does not match Y shape {Y.shape}")
+    
     m = Y.shape[1]
     
     if from_logits:
@@ -320,6 +327,11 @@ def linear_activation_backward(dA, cache, activation):
     elif activation == "tanh":
         dZ = tanh_backward(dA, activation_cache)
         dA_prev, dW, db = linear_backward(dZ, linear_cache)
+    elif activation == "linear":
+        dZ = dA
+        dA_prev, dW, db = linear_backward(dZ, linear_cache)
+    else:
+        raise ValueError(f"Unsupported activation: {activation}")
     
     return dA_prev, dW, db
 
