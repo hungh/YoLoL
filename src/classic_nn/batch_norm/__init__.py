@@ -1,107 +1,75 @@
 """
-Classic neural network implementations for comparison with YOLO models.
+Classic batch normalization implementation.
 """
-from .regularization import L2_regularization 
+
+# IN PROGRESS..... Do not use 
+
+from classic_nn.regularization import L2_regularization 
+from classic_nn.activation import sigmoid, relu, tanh
+
 import numpy as np
-
-def sigmoid(Z):
-    """
-    Implement the sigmoid activation function.
-    
-    Arguments:
-        Z: numpy array of any shape
-    
-    Returns:
-        A: the output of the sigmoid function
-        cache: a python tuple containing "Z" for backward propagation
-    """
-    A = 1/(1+np.exp(-Z))
-    cache = Z
-    return A, cache
-
-def relu(Z):
-    """
-    Implement the ReLU activation function.
-    
-    Arguments:
-        Z: numpy array of any shape
-    
-    Returns:
-        A: the output of the ReLU function
-        cache: a python tuple containing "Z" for backward propagation
-    """
-    A = np.maximum(0, Z)
-    cache = Z
-    return A, cache
-
-
-def tanh(Z):
-    """
-    Implement the tanh activation function.
-    
-    Arguments:
-        Z: numpy array of any shape
-    
-    Returns:
-        A: the output of the tanh function
-        cache: a python tuple containing "Z" for backward propagation
-    """
-    A = np.tanh(Z)
-    cache = Z
-    return A, cache
 
 
 def initialize_parameters_deep(layer_dims):
     """
-    Initialize parameters for deep neural network.
+    Initialize parameters for deep neural network, including batch normalization parameters. 
     
     Args:
         layer_dims: list of integers representing the number of units in each layer
     
     Returns:
         Dictionary containing initialized parameters
-        W1, b1, W2, b2, ...
+        W1, G1, B1, W2, G2, B2, ...
     """    
     parameters = {}
     L = len(layer_dims)
     
     for l in range(1, L):
-        parameters['W' + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1]) * 1/np.sqrt(layer_dims[l-1])
-        parameters['b' + str(l)] = np.zeros((layer_dims[l], 1))
+        parameters['W' + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1]) * 1/np.sqrt(layer_dims[l-1])        
+        parameters['G' + str(l)] = np.ones((layer_dims[l], 1))
+        parameters['B' + str(l)] = np.zeros((layer_dims[l], 1))
     
-    assert(parameters['W' + str(1)].shape == (layer_dims[1], layer_dims[0]))
-    assert(parameters['b' + str(1)].shape == (layer_dims[1], 1))
+    assert(parameters['W' + str(1)].shape == (layer_dims[1], layer_dims[0]))    
+    assert(parameters['G' + str(1)].shape == (layer_dims[1], 1))
+    assert(parameters['B' + str(1)].shape == (layer_dims[1], 1))
     
-    return parameters
+    return parameters   
 
 
     
-def linear_forward(A, W, b):
+def linear_forward(A, W, G, B):
     """
     Implement the linear part of a layer's forward propagation.
     
     Arguments:
         A: activations from previous layer (or input data)
         W: weights matrix
-        b: bias vector
+        G: gamma matrix in batch normalization
+        B: beta matrix in batch normalization
     
     Returns:
         Z: the input of the activation function
         cache: a python tuple containing "linear_cache" and "activation_cache"
     """
-    Z = np.dot(W, A) + b
-    cache = (A, W, b)
+    Z = np.dot(W, A)
+    mean_z = np.mean(Z, axis=1, keepdims=True)
+    var_z = np.var(Z, axis=1, keepdims=True)
+    epsilon = 1e-8
+    Z_norm = (Z - mean_z) / np.sqrt(var_z + epsilon)
+    Z = G * Z_norm + B
+    cache = (A, W, G, B, Z_norm, mean_z, var_z, epsilon)
     return Z, cache
 
 
-def linear_activation_forward(A_prev, W, b, activation):
+def linear_activation_forward(A_prev, W, G, B, activation):
     """
     Implement the forward propagation for the LINEAR->ACTIVATION layer
     
     Arguments:
         A_prev: activations from previous layer (or input data)
         W: weights matrix
-        b: bias vector
+        G: gamma matrix in batch normalization
+        B: beta matrix in batch normalization
         activation: the activation to be used in this layer, stored as a text string: "sigmoid" or "relu"
     
     Returns:
@@ -109,13 +77,13 @@ def linear_activation_forward(A_prev, W, b, activation):
         cache: a python tuple containing "linear_cache" and "activation_cache"
     """
     if activation == 'sigmoid':
-        Z, linear_cache = linear_forward(A_prev, W, b)
+        Z, linear_cache = linear_forward(A_prev, W, G, B)
         A, activation_cache = sigmoid(Z)
     elif activation == 'relu':
-        Z, linear_cache = linear_forward(A_prev, W, b)
+        Z, linear_cache = linear_forward(A_prev, W, G, B)
         A, activation_cache = relu(Z)
     elif activation == 'tanh':
-        Z, linear_cache = linear_forward(A_prev, W, b)
+        Z, linear_cache = linear_forward(A_prev, W, G, B)
         A, activation_cache = tanh(Z)
     
     cache = (linear_cache, activation_cache)
@@ -124,7 +92,7 @@ def linear_activation_forward(A_prev, W, b, activation):
 
 def L_model_forward(X, parameters):
     """
-    Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR->SIGMOID computation
+    Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR->(SIGMOID|LOGITS) computation
     
     Arguments:
         X: data, numpy array of shape (input size, number of examples)
@@ -141,10 +109,10 @@ def L_model_forward(X, parameters):
     
     for l in range(1, L):
         A_prev = A
-        A, cache = linear_activation_forward(A_prev, parameters['W' + str(l)], parameters['b' + str(l)], 'relu')
+        A, cache = linear_activation_forward(A_prev, parameters['W' + str(l)], parameters['G' + str(l)], parameters['B' + str(l)], 'relu')
         caches.append(cache)
     
-    AL, cache = linear_activation_forward(A, parameters['W' + str(L)], parameters['b' + str(L)], 'sigmoid')
+    AL, cache = linear_activation_forward(A, parameters['W' + str(L)], parameters['G' + str(L)], parameters['B' + str(L)], 'sigmoid')
     caches.append(cache)
     
     assert(AL.shape == (1, X.shape[1]))
@@ -183,7 +151,7 @@ def custom_model_forward(X: np.ndarray, parameters: dict, layer_names: list[str]
 
         current_activation = 'sigmoid' if (l == L and apply_sigmoid) else 'relu'
 
-        A, cache = linear_activation_forward(A_prev, parameters['W' + str(l)], parameters['b' + str(l)], current_activation)
+        A, cache = linear_activation_forward(A_prev, parameters['W' + str(l)], parameters['G' + str(l)], parameters['B' + str(l)], current_activation)
         caches.append(cache)
         
     if num_classes is not None and A.shape[0] != num_classes:
@@ -227,49 +195,80 @@ def  BCE_WithLogitsLoss(AL, Y, parameters: dict, from_logits: bool = True, lambd
 
 def linear_backward(dZ, cache, lambda_reg=None):
     """
-    Implement the linear portion of backward propagation for a single layer (layer l)
-
     Arguments:
-        dZ: Gradient of the cost with respect to the linear output (of current layer l)
-        cache: tuple of values (A_prev, W, b) coming from the forward propagation in the current layer
-
+        dZ: Gradient of the cost with respect to the linear output
+        cache: tuple of (A_prev, W, G, B, Z_norm, mean, var, epsilon) from forward pass
+        lambda_reg: L2 regularization parameter
+    
     Returns:
-        dA_prev: Gradient of the cost with respect to the activation (of the previous layer l-1), same shape as A_prev
-        dW: Gradient of the cost with respect to W (current layer l), same shape as W
-        db: Gradient of the cost with respect to b (current layer l), same shape as b
+        dA_prev: Gradient w.r.t. previous layer's activations
+        dW: Gradient w.r.t. weights W
+        dG: Gradient w.r.t. scale parameter gamma
+        dB: Gradient w.r.t. shift parameter beta
     """
-    A_prev, W, _ = cache
+    A_prev, W, G, B, Z_norm, mean, var, epsilon = cache
     m = A_prev.shape[1]
     
-    regularization_weight = 0
+    # Gradients of batch norm parameters
+    dG = np.sum(dZ * Z_norm, axis=1, keepdims=True) / m
+    dB = np.sum(dZ, axis=1, keepdims=True) / m
+    
+    # Gradient through batch norm
+    dZ_norm = dZ * G
+    
+    # Gradient of variance
+    dvar = np.sum(dZ_norm * (A_prev - mean) * -0.5 * (var + epsilon)**(-1.5), axis=1, keepdims=True)
+    
+    # Gradient of mean
+    dmean = np.sum(dZ_norm * -1 / np.sqrt(var + epsilon), axis=1, keepdims=True) + \
+            dvar * np.sum(-2 * (A_prev - mean), axis=1, keepdims=True) / m
+    
+    # Gradient of Z (before batch norm)
+    dZ_prev = (dZ_norm / np.sqrt(var + epsilon)) + \
+              (dvar * 2 * (A_prev - mean) / m) + \
+              (dmean / m)
+    
+    # Gradient of weights
+    dW = np.dot(dZ_prev, A_prev.T) / m
     if lambda_reg is not None:
-        regularization_weight = lambda_reg / m
+        dW += (lambda_reg / m) * W
     
-    dW = 1./m * np.dot(dZ, A_prev.T) + regularization_weight * W
-    db = 1./m * np.sum(dZ, axis = 1, keepdims = True)
-    dA_prev = np.dot(W.T, dZ)
+    # Gradient w.r.t. previous layer's activations
+    dA_prev = np.dot(W.T, dZ_prev)
     
-    return dA_prev, dW, db
+    return dA_prev, dW, dG, dB
 
 
 def relu_backward(dA, cache):
     """
-    Implement the backward propagation for the RELU function.
+    Implement the backward propagation for the RELU function with batch norm.
     
     Arguments:
-        dA: post-activation gradient, of any shape
-        cache: 'Z' where we store for computing backward propagation efficiently
+        dA: post-activation gradient, of shape (n, m)
+        cache: tuple containing (Z, linear_cache) where:
+            - Z is the input to the activation function
+            - linear_cache is the cache from the linear_forward pass
+              (A_prev, W, G, B, Z_norm, mean, var, epsilon)
     
     Returns:
-        dZ: Gradient of the cost with respect to Z
+        dA_prev: Gradient of the cost with respect to the activation (of the previous layer l-1)
+        dW: Gradient of the cost with respect to W (current layer l)
+        dG: Gradient of the cost with respect to the scale parameter gamma
+        dB: Gradient of the cost with respect to the shift parameter beta
     """
-    Z = cache
-    dZ = np.array(dA, copy=True)  # just converting dz to a correct object.
+    Z, linear_cache = cache
+    dZ = np.array(dA, copy=True)  # Just converting dA to a correct object
     
-    # When z <= 0, you should set dz to 0 as well. 
+    # When z <= 0, set dz to 0
     dZ[Z <= 0] = 0
     
-    return dZ
+    # Pass through the linear backward pass
+    dA_prev, dW, dG, dB = linear_backward(dZ, linear_cache)
+    
+    return dA_prev, dW, dG, dB
+
+
+# TODO: implement batch norm for sigmoid and tanh and the rest of the code below    
 
 def sigmoid_backward(dA, cache):
     """

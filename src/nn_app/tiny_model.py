@@ -71,7 +71,7 @@ def plot_dataset(X, Y, max_samples=1000):
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.show()
 
-def load_tiny_dataset(n_samples=1000, n_features=32*32*3, n_classes=10, avg_labels=3, test_size=0.2, random_state=42):
+def load_tiny_dataset(n_samples=1000, n_features=32*32*3, n_classes=3, avg_labels=3, test_size=0.2, random_state=42):
     """
     Load a tiny multi-label dataset for testing.
     
@@ -106,9 +106,14 @@ def load_tiny_dataset(n_samples=1000, n_features=32*32*3, n_classes=10, avg_labe
         allow_unlabeled=False, # Ensures every 'image' has at least one object
         random_state=random_state
     )
+
+    print(f"Data set has been initialized with {n_samples} samples, {n_features} features, {n_classes} classes, {avg_labels} average labels per sample")
     # split the dataset into train and test
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state )
-    # Deep Learning Transpose (optional, based on your previous code)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state, shuffle=True)
+    
+    print("Train label distribution:", np.mean(Y_train, axis=0))
+    print("Test label distribution:", np.mean(Y_test, axis=0))
+
     # Returns X as (Features, Samples) and Y as (Classes, Samples)    
     return X_train.T, Y_train.T, X_test.T, Y_test.T 
 
@@ -120,7 +125,22 @@ def tin_batch_generator(X_train, Y_train, batch_size):
     for i in range(0, X_train.shape[1], batch_size):
         yield X_train[:, i:i+batch_size], Y_train[:, i:i+batch_size]
 
+"""
+NOTE: the model overfitting on train set. See exec metrics below
+Train Metrics:
+exact_match: 1.0000
+hamming_loss: 0.0000
+f1_score: 1.0000
+avg_predicted: 0.5643
+avg_actual: 0.5643
+Test Metrics:
+exact_match: 0.1540
+hamming_loss: 0.3182
+f1_score: 0.7600
+avg_predicted: 0.7593
+avg_actual: 0.5664
 
+"""
 def train_model_mini_batch(X_train, Y_train, X_test, Y_test, print_cost=False, num_classes=1, enable_plot=False):
     """
     Train the tiny model using mini-batch gradient descent.
@@ -144,17 +164,25 @@ def train_model_mini_batch(X_train, Y_train, X_test, Y_test, print_cost=False, n
         
     
     hyperparameters = {
-        "epochs": 1000, 
-        "learning_rate": 0.001, # TODO: will use decay learning rate        
+        "epochs": 500, 
+        "learning_rate": 0.0075, # TODO: will use decay learning rate        
         "batch_size": 64,                
         "last_activation": "linear",
-        "num_classes": num_classes
-    }      
+        "num_classes": num_classes,
+        "lambda_reg": 0.01 
+    }    
+
+    # print all hyperparameters
+    print("Hyperparameters:")
+    for k, v in hyperparameters.items():
+        print(f"{k}: {v}")
+    print("-" * 50); print("\n")
     
     start_time = time.time()
 
     input_size = X_train.shape[0]
-    layers_dims = [input_size, 256, 128, 64, 32, num_classes]
+    # layers_dims = [input_size, 256, 128, 64, 32, num_classes]
+    layers_dims = [input_size, 64, 32, 16, num_classes]
     activations = ["relu"] * (len(layers_dims) - 1) + ["linear"]
         
     parameters = initialize_parameters_deep(layers_dims)  
@@ -168,7 +196,7 @@ def train_model_mini_batch(X_train, Y_train, X_test, Y_test, print_cost=False, n
             # the parameters will be updated in this function
             cost, _, _ = forward_and_backward_propagation(X_batch, Y_batch, parameters, activations,
              num_classes=hyperparameters["num_classes"],
-             learning_rate=hyperparameters["learning_rate"], last_activation=hyperparameters["last_activation"])               
+             learning_rate=hyperparameters["learning_rate"], last_activation=hyperparameters["last_activation"], lambda_reg=hyperparameters["lambda_reg"])               
                         
             # clean up memory
             del X_batch, Y_batch         
@@ -206,7 +234,7 @@ def train_model_mini_batch(X_train, Y_train, X_test, Y_test, print_cost=False, n
     A, _ = custom_model_forward(X_test, parameters, activations, num_classes, apply_sigmoid=(hyperparameters["last_activation"] == "sigmoid"))
     
     # calculate accuracy after apply sigmoid
-    print(f"A shape: {A.shape} and its 5 first values: {A[:1]}")
+    # print(f"A shape: {A.shape} and its 5 first values: {A[:1]}")
     Y_pred, _ = sigmoid(A)
     metrics = multi_label_metrics(Y_pred, Y_test)
     print("Test Metrics:")
@@ -215,46 +243,10 @@ def train_model_mini_batch(X_train, Y_train, X_test, Y_test, print_cost=False, n
 
 
 if __name__ == "__main__":
-    number_cls = 3
-    X_train, Y_train, X_test, Y_test = load_tiny_dataset(n_samples=2000, n_classes=number_cls)
-    train_model_mini_batch(X_train, Y_train, X_test, Y_test, print_cost=True, num_classes=number_cls, enable_plot=True)
+    number_cls = 5
+    plot_yes = False
+    print(f"Plotting: {plot_yes}")
+    X_train, Y_train, X_test, Y_test = load_tiny_dataset(n_samples=15000, n_classes=number_cls)
+    train_model_mini_batch(X_train, Y_train, X_test, Y_test, print_cost=True, num_classes=number_cls, enable_plot=plot_yes)
 
-
-"""
-TODO list
-Issues and Next steps:
-
-Key Observations:
-##Severe Overfitting:
-    Train exact_match: 98.44% (nearly perfect)
-    Test exact_match: 40.75% (much lower)
-    This large gap suggests the model is memorizing the training data rather than generalizing.
-## Class Imbalance:
-    The avg_actual shows the positive class ratio is ~71.7% in both train and test sets.
-    The model is predicting more positive classes in the test set (avg_predicted: 99.33%) than in the training set (71.73%), indicating potential overconfidence.
-## F1 Score Discrepancy:
-    Train F1: 0.9962 (very high)
-    Test F1: 0.8368 (good but much lower than training)
-    The model's performance drops significantly on unseen data.
-## Recommended Actions:
-- Regularization:
-    Add L2 regularization (weight decay) to the loss function.
-    Consider adding dropout layers to prevent co-adaptation of features.
-- Learning Rate Adjustment:
-    The current learning rate (0.001) might be too high, causing the model to overshoot the optimal weights.
-    Try reducing the learning rate or implementing a learning rate scheduler.
-- Early Stopping:
-    Monitor validation loss and stop training when it stops improving to prevent overfitting.
-- Batch Normalization:
-    Add batch normalization layers to help with training stability and convergence.
-- Data Augmentation:
-    If possible, augment the training data to increase its diversity.
-- Model Architecture:
-    The current architecture might be too complex. Consider reducing the number of hidden units or layers.
-- Class Weights:
-    If there's class imbalance, consider using class weights in the loss function.
-- Learning Rate Scheduling:
-    Implement a learning rate scheduler to reduce the learning rate when the validation loss plateaus.
-"""
-    
 
