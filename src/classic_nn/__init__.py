@@ -212,7 +212,7 @@ def  BCE_WithLogitsLoss(AL, Y, from_logits: bool = True) -> float:
     
     m = Y.shape[1]
     
-    if from_logits:
+    if from_logits:        
         AL = 1. / (1. + np.exp(-AL))
         AL = np.clip(AL, 1e-15, 1 - 1e-15)  
     
@@ -220,8 +220,7 @@ def  BCE_WithLogitsLoss(AL, Y, from_logits: bool = True) -> float:
     cost = -np.sum(Y * np.log(AL + 1e-15) + (1 - Y) * np.log(1 - AL + 1e-15)) / m
     
     # Make sure to reshape the cost to avoid nested arrays
-    cost = np.squeeze(cost)
-    
+    cost = np.squeeze(cost)    
     return cost
 
 
@@ -377,6 +376,21 @@ def custom_model_backward(AL, Y, caches, activations, last_activation="sigmoid")
         grads["db" + str(l + 1)] = db_temp
     
     return grads
+
+
+
+def forward_and_backward_propagation(X, Y, parameters, activations, learning_rate=0.0075, num_classes=1, last_activation="sigmoid"):
+    """
+    Running forward and backward propagation on a single batch of data
+    Returns cost, grads, parameters
+    """    
+    A, caches = custom_model_forward(X, parameters, activations, num_classes, apply_sigmoid=(last_activation == "sigmoid"))
+    cost = BCE_WithLogitsLoss(A, Y, from_logits=(last_activation == "linear"))
+    grads = custom_model_backward(A, Y, caches, activations, last_activation)
+    parameters = update_parameters(parameters, grads, learning_rate)
+    
+    return cost, grads, parameters
+    
 
 
 def update_parameters(parameters, grads, learning_rate):

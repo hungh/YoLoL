@@ -108,6 +108,25 @@ def resize_with_padding(img, target_size=64):
 
     return padded
 
+# an optimized version of process_dataset_batches
+def batch_generator(image_paths, labels_dir, batch_size, target_size):
+    """Generate batches of data on the fly."""
+    num_samples = len(image_paths)
+    indices = np.arange(num_samples)
+    np.random.shuffle(indices)
+    
+    for start_idx in range(0, num_samples, batch_size):
+        batch_indices = indices[start_idx:start_idx + batch_size]
+        batch_paths = [image_paths[i] for i in batch_indices]
+        X_batch, Y_batch = process_dataset_batches(
+            batch_paths, labels_dir, 
+            starting_image_path_index=0,  # since we're passing specific paths
+            target_size=target_size,
+            batch_size=len(batch_paths)
+        )
+        X_batch = scale_data(X_batch, method='minmax')
+        yield X_batch, Y_batch
+
 
 def process_dataset_batches(image_paths, labels_dir, starting_image_path_index=0, target_size=64, batch_size = None) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -152,7 +171,7 @@ def process_dataset_batches(image_paths, labels_dir, starting_image_path_index=0
     end_index = min(starting_image_path_index + batch_size, len(image_paths))
     batch_paths = image_paths[starting_image_path_index:end_index]
 
-    print(f"Processing {len(batch_paths)} images (batch {starting_image_path_index//batch_size + 1})...")
+    print(f"\nProcessing batch of {len(batch_paths)} images...", end='', flush=True)
 
     for i, img_path in enumerate(batch_paths):        
         if i % 100 == 0:
