@@ -90,36 +90,6 @@ def linear_activation_forward(A_prev, W, G, B, activation):
     return A, cache
 
 
-def L_model_forward(X, parameters):
-    """
-    Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR->(SIGMOID|LOGITS) computation
-    
-    Arguments:
-        X: data, numpy array of shape (input size, number of examples)
-        parameters: output of initialize_parameters_deep()
-    
-    Returns:
-        AL: last post-activation value
-        caches: list of caches containing:
-                every cache of linear_activation_forward() (L-1 caches)
-    """
-    caches = []
-    A = X
-    L = len(parameters) // 2
-    
-    for l in range(1, L):
-        A_prev = A
-        A, cache = linear_activation_forward(A_prev, parameters['W' + str(l)], parameters['G' + str(l)], parameters['B' + str(l)], 'relu')
-        caches.append(cache)
-    
-    AL, cache = linear_activation_forward(A, parameters['W' + str(L)], parameters['G' + str(L)], parameters['B' + str(L)], 'sigmoid')
-    caches.append(cache)
-    
-    assert(AL.shape == (1, X.shape[1]))
-    
-    return AL, caches
-
-
 def custom_model_forward(X: np.ndarray, parameters: dict, layer_names: list[str], num_classes: int = 1, apply_sigmoid=False) -> tuple[np.ndarray, list]:
     """
     Implement custom model for classification
@@ -256,35 +226,32 @@ def relu_backward(dA, cache):
         dG: Gradient of the cost with respect to the scale parameter gamma
         dB: Gradient of the cost with respect to the shift parameter beta
     """
-    Z, linear_cache = cache
+    Z, _ = cache
     dZ = np.array(dA, copy=True)  # Just converting dA to a correct object
     
     # When z <= 0, set dz to 0
-    dZ[Z <= 0] = 0
+    dZ[Z <= 0] = 0    
     
-    # Pass through the linear backward pass
-    dA_prev, dW, dG, dB = linear_backward(dZ, linear_cache)
-    
-    return dA_prev, dW, dG, dB
+    return dZ
 
 
-# TODO: implement batch norm for sigmoid and tanh and the rest of the code below    
-
-def sigmoid_backward(dA, cache):
+def sigmoid_backward(dA, cache, reg_lambda=None):
     """
     Implement the backward propagation for the SIGMOID function.
     
     Arguments:
         dA: post-activation gradient, of any shape
-        cache: 'Z' where we store for computing backward propagation efficiently
+        cache: tuple containing (Z, linear_cache) where:
+            - Z is the input to the activation function
+            - linear_cache is the cache from the linear_forward pass
+              (A_prev, W, G, B, Z_norm, mean, var, epsilon)
     
     Returns:
         dZ: Gradient of the cost with respect to Z
     """
-    Z = cache
+    Z, _ = cache
     s = 1/(1+np.exp(-Z))
     dZ = dA * s * (1-s)
-    
     return dZ
 
 def tanh_backward(dA, cache):
@@ -293,14 +260,17 @@ def tanh_backward(dA, cache):
     
     Arguments:
         dA: post-activation gradient, of any shape
-        cache: 'Z' where we store for computing backward propagation efficiently
+        cache: tuple containing (Z, linear_cache) where:
+            - Z is the input to the activation function
+            - linear_cache is the cache from the linear_forward pass
+              (A_prev, W, G, B, Z_norm, mean, var, epsilon)
     
     Returns:
         dZ: Gradient of the cost with respect to Z
     """
-    Z = cache
+    Z, _ = cache
     dZ = dA * (1 - np.tanh(Z)**2)
-    
+   
     return dZ
 
 def linear_activation_backward(dA, cache, activation, lambda_reg=0.01):
@@ -315,28 +285,29 @@ def linear_activation_backward(dA, cache, activation, lambda_reg=0.01):
     Returns:
         dA_prev: Gradient of the cost with respect to the activation (of the previous layer l-1), same shape as A_prev
         dW: Gradient of the cost with respect to W (current layer l), same shape as W
-        db: Gradient of the cost with respect to b (current layer l), same shape as b
+        dG: Gradient of the cost with respect to the scale parameter gamma
+        dB: Gradient of the cost with respect to the shift parameter beta
     """
     linear_cache, activation_cache = cache
     
     if activation == "relu":
         dZ = relu_backward(dA, activation_cache)
-        dA_prev, dW, db = linear_backward(dZ, linear_cache, lambda_reg)
-        
+        # Pass through the linear backward pass
+        dA_prev, dW, dG, dB = linear_backward(dZ, linear_cache, lambda_reg)
     elif activation == "sigmoid":
         dZ = sigmoid_backward(dA, activation_cache)
-        dA_prev, dW, db = linear_backward(dZ, linear_cache, lambda_reg)
-        
+        # Pass through the linear backward pass
+        dA_prev, dW, dG, dB = linear_backward(dZ, linear_cache, lambda_reg)
     elif activation == "tanh":
         dZ = tanh_backward(dA, activation_cache)
-        dA_prev, dW, db = linear_backward(dZ, linear_cache, lambda_reg)
+        # Pass through the linear backward pass
+        dA_prev, dW, dG, dB = linear_backward(dZ, linear_cache, lambda_reg)
     elif activation == "linear":
-        dZ = dA
-        dA_prev, dW, db = linear_backward(dZ, linear_cache, lambda_reg)
+        dA_prev, dW, dG, dB = linear_backward(dA, linear_cache, lambda_reg)
     else:
         raise ValueError(f"Unsupported activation: {activation}")
     
-    return dA_prev, dW, db
+    return dA_prev, dW, dG, dB
 
 # without regularization
 def custom_model_backward(AL, Y, caches, activations, last_activation="sigmoid", lambda_reg=0.01):
@@ -369,15 +340,16 @@ def custom_model_backward(AL, Y, caches, activations, last_activation="sigmoid",
     
     
     current_cache = caches[L-1]
-    grads["dA" + str(L-1)], grads["dW" + str(L)], grads["db" + str(L)] = linear_activation_backward(dAL, current_cache, last_activation, lambda_reg)
+    grads["dA" + str(L-1)], grads["dW" + str(L)], grads["dG" + str(L)], grads["dB" + str(L)] = linear_activation_backward(dAL, current_cache, last_activation, lambda_reg)
     
     # Loop from l=L-2 to l=0
     for l in reversed(range(L-1)):        
         current_cache = caches[l]
-        dA_prev_temp, dW_temp, db_temp = linear_activation_backward(grads["dA" + str(l + 1)], current_cache, activations[l], lambda_reg)
+        dA_prev_temp, dW_temp, dG_temp, dB_temp = linear_activation_backward(grads["dA" + str(l + 1)], current_cache, activations[l], lambda_reg)
         grads["dA" + str(l)] = dA_prev_temp
         grads["dW" + str(l + 1)] = dW_temp
-        grads["db" + str(l + 1)] = db_temp
+        grads["dG" + str(l + 1)] = dG_temp
+        grads["dB" + str(l + 1)] = dB_temp
     
     return grads
   
@@ -408,11 +380,18 @@ def update_parameters(parameters, grads, learning_rate):
     Returns:
         parameters: dictionary containing your updated parameters 
     """
-    L = len(parameters) // 2 # number of layers in the neural network
+    L = len(parameters) // 3 # number of layers in the neural network; each layer has W, G, B
 
     # Update rule for each parameter. Use a for loop.
     for l in range(L):
         parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate * grads["dW" + str(l+1)]
-        parameters["b" + str(l+1)] = parameters["b" + str(l+1)] - learning_rate * grads["db" + str(l+1)]
+        parameters["G" + str(l+1)] = parameters["G" + str(l+1)] - learning_rate * grads["dG" + str(l+1)]
+        parameters["B" + str(l+1)] = parameters["B" + str(l+1)] - learning_rate * grads["dB" + str(l+1)]
     
     return parameters
+
+    
+
+def gradient_check(parameters, gradients, X, Y, epsilon=1e-7):
+    # TODO Implementation of gradient checking
+    pass
