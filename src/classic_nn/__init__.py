@@ -3,6 +3,9 @@ Classic neural network implementations for comparison with YOLO models.
 """
 from .regularization import L2_regularization 
 import numpy as np
+from . import optimizers
+from .utils import get_num_layers
+
 
 def sigmoid(Z):
     """
@@ -51,7 +54,7 @@ def tanh(Z):
     return A, cache
 
 
-def initialize_parameters_deep(layer_dims):
+def initialize_parameters_deep(layer_dims: list, optimizer_instance: optimizers.Optimizers=None) -> dict:
     """
     Initialize parameters for deep neural network.
     
@@ -71,6 +74,9 @@ def initialize_parameters_deep(layer_dims):
     
     assert(parameters['W' + str(1)].shape == (layer_dims[1], layer_dims[0]))
     assert(parameters['b' + str(1)].shape == (layer_dims[1], 1))
+    
+    if optimizer_instance is not None:
+        optimizer_instance.initialize_parameters(parameters, layer_dims)
     
     return parameters
 
@@ -137,7 +143,7 @@ def L_model_forward(X, parameters):
     """
     caches = []
     A = X
-    L = len(parameters) // 2
+    L = get_num_layers(parameters)
     
     for l in range(1, L):
         A_prev = A
@@ -168,7 +174,7 @@ def custom_model_forward(X: np.ndarray, parameters: dict, layer_names: list[str]
     """
     caches = []
     A = X
-    L = len(parameters) // 2
+    L = get_num_layers(parameters)
 
     # check layer_names length
     if len(layer_names) - 1 != L:
@@ -248,7 +254,7 @@ def linear_backward(dZ, cache, lambda_reg=None):
     dW = 1./m * np.dot(dZ, A_prev.T) + regularization_weight * W
     db = 1./m * np.sum(dZ, axis = 1, keepdims = True)
     dA_prev = np.dot(W.T, dZ)
-    
+
     return dA_prev, dW, db
 
 
@@ -339,7 +345,7 @@ def linear_activation_backward(dA, cache, activation, lambda_reg=0.01):
     
     return dA_prev, dW, db
 
-# without regularization
+
 def custom_model_backward(AL, Y, caches, activations, last_activation="sigmoid", lambda_reg=0.01):
     """
     Implement the backward propagation for the [LINEAR->RELU] * (L-1) -> LINEAR -> SIGMOID group
@@ -383,7 +389,7 @@ def custom_model_backward(AL, Y, caches, activations, last_activation="sigmoid",
     return grads
   
 
-def forward_and_backward_propagation(X, Y, parameters, activations, learning_rate=0.0075, num_classes=1, last_activation="sigmoid", lambda_reg=0.01):
+def forward_and_backward_propagation(X, Y, parameters, activations, learning_rate=0.0075, num_classes=1, last_activation="sigmoid", lambda_reg=0.01, optimizer_instance: optimizers.Optimizers=None):
     """
     Running forward and backward propagation on a single batch of data
     Returns cost, grads, parameters
@@ -391,14 +397,14 @@ def forward_and_backward_propagation(X, Y, parameters, activations, learning_rat
     A, caches = custom_model_forward(X, parameters, activations, num_classes, apply_sigmoid=(last_activation == "sigmoid"))
     cost = BCE_WithLogitsLoss(A, Y, parameters, from_logits=(last_activation == "linear"), lambda_reg=lambda_reg)
     grads = custom_model_backward(A, Y, caches, activations, last_activation, lambda_reg)
-    parameters = update_parameters(parameters, grads, learning_rate)
+    parameters = update_parameters(parameters, grads, learning_rate, optimizer_instance)
     
     return cost, grads, parameters
    
 
 
 
-def update_parameters(parameters, grads, learning_rate):
+def update_parameters(parameters, grads, learning_rate, optimizer_instance: optimizers.Optimizers=None):
     """
     Update parameters using gradient descent
     
@@ -409,11 +415,21 @@ def update_parameters(parameters, grads, learning_rate):
     Returns:
         parameters: dictionary containing your updated parameters 
     """
-    L = len(parameters) // 2 # number of layers in the neural network
+    L = get_num_layers(parameters) # number of layers in the neural network
 
     # Update rule for each parameter. Use a for loop.
     for l in range(L):
-        parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate * grads["dW" + str(l+1)]
-        parameters["b" + str(l+1)] = parameters["b" + str(l+1)] - learning_rate * grads["db" + str(l+1)]
+        if optimizer_instance is not None:
+            optimizer_instance.update_parameters_once(
+                parameters, 
+                grads,
+                l + 1
+            )
+            parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate * grads["vW" + str(l+1)]
+            parameters["b" + str(l+1)] = parameters["b" + str(l+1)] - learning_rate * grads["vb" + str(l+1)]
+            
+        else:
+            parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate * grads["dW" + str(l+1)]
+            parameters["b" + str(l+1)] = parameters["b" + str(l+1)] - learning_rate * grads["db" + str(l+1)]
     
     return parameters

@@ -6,15 +6,11 @@ import numpy as np
 from sklearn.datasets import make_moons
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from ..classic_nn.batch_norm import forward_and_backward_propagation, initialize_parameters_deep, custom_model_forward
-# from ..classic_nn import forward_and_backward_propagation, initialize_parameters_deep
-
-# using skit-learn to generate a binary classification data set
-# using skit-learn to train a binary classification model with batch normalization
-# using skit-learn to evaluate the model
-# using skit-learn to plot the results
+# from ..classic_nn import forward_and_backward_propagation, initialize_parameters_deep, custom_model_forward
+from ..classic_nn.optimizers import Optimizers
 
 def generate_binary_classification_data():
-    X, Y = make_moons(n_samples=1000, noise=0.2, random_state=42)
+    X, Y = make_moons(n_samples=15000, noise=0.2, random_state=42)
     return X, Y
 
 def train_model():
@@ -49,8 +45,11 @@ def train_model():
     activations = ["relu", "relu", "linear"]
     lambda_reg = 0.01
     number_of_classes = 1
+    # momentum
+    beta = 0.9
+    optimizer = Optimizers("momentum").get_optimizer(beta=beta)
     # initialize parameters
-    parameters = initialize_parameters_deep(layers_dims)
+    parameters = initialize_parameters_deep(layers_dims, optimizer)
     
     # train the model
     costs = []
@@ -63,7 +62,7 @@ def train_model():
             print(f"Cost after iteration {i}: {cost}")
     
 
-    evaluate_model(X_dev, Y_dev, parameters, activations, num_classes=number_of_classes, last_activation="sigmoid", lambda_reg=lambda_reg)
+    evaluate_model(X_dev, Y_dev, parameters, activations, num_classes=number_of_classes, last_activation="sigmoid")
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     # plot the cost
@@ -109,7 +108,7 @@ def plot_decision_boundary(X, Y, parameters, activations, num_classes, ax):
     ax.scatter(X_plot[:, 0], X_plot[:, 1], c=Y_plot, edgecolors='k')    
 
 
-def evaluate_model(X_dev, Y_dev, parameters, activations, num_classes=1, last_activation="sigmoid", lambda_reg=0.01):
+def evaluate_model(X_dev, Y_dev, parameters, activations, num_classes=1, last_activation="sigmoid"):
     A, _ = custom_model_forward(X_dev, parameters, activations, num_classes, apply_sigmoid=(last_activation == "sigmoid"))
 
     # Reshape Y_dev from (1, n_samples) to (n_samples,)
@@ -118,7 +117,7 @@ def evaluate_model(X_dev, Y_dev, parameters, activations, num_classes=1, last_ac
     
     # calculate accuracy
     accuracy = np.mean((A_flat > 0.5) == Y_dev_flat)
-    print(f"Accuracy on dev set: {accuracy}")
+    print("Metrics on dev set:")   
 
     # calculate f1 score    
     accuracy = accuracy_score(Y_dev_flat, A_flat > 0.5)

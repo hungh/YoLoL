@@ -4,11 +4,14 @@ Classic batch normalization implementation.
 
 from ..regularization import L2_regularization 
 from .. import sigmoid, relu, tanh
+from .. import optimizers
+from ..utils import get_num_layers
+
 
 import numpy as np
 
 
-def initialize_parameters_deep(layer_dims):
+def initialize_parameters_deep(layer_dims, optimizer_instance: optimizers.Optimizers=None):
     """
     Initialize parameters for deep neural network, including batch normalization parameters. 
     
@@ -30,6 +33,11 @@ def initialize_parameters_deep(layer_dims):
     assert(parameters['W' + str(1)].shape == (layer_dims[1], layer_dims[0]))    
     assert(parameters['G' + str(1)].shape == (layer_dims[1], 1))
     assert(parameters['B' + str(1)].shape == (layer_dims[1], 1))
+    
+    if optimizer_instance is not None:
+        print(f"The model is using optimizer {optimizer_instance}")
+        parameters['_batch_norm'] = True
+        optimizer_instance.initialize_parameters(parameters, layer_dims)
     
     return parameters   
 
@@ -104,7 +112,7 @@ def custom_model_forward(X: np.ndarray, parameters: dict, layer_names: list[str]
     """
     caches = []
     A = X
-    L = len(parameters) // 3 # each layer has W, G, B
+    L = get_num_layers(parameters)
 
     # check layer_names length
     if len(layer_names) - 1 != L:
@@ -157,7 +165,7 @@ def  BCE_WithLogitsLoss(AL, Y, parameters: dict, from_logits: bool = True, lambd
     cost = -np.sum(Y * np.log(AL + 1e-15) + (1 - Y) * np.log(1 - AL + 1e-15)) / m
     
     # Make sure to reshape the cost to avoid nested arrays
-    cost = np.squeeze(cost) + L2_regularization(m, parameters, lambda_reg, use_batch_norm=True)
+    cost = np.squeeze(cost) + L2_regularization(m, parameters, lambda_reg)
     return cost
 
 
@@ -370,7 +378,7 @@ def forward_and_backward_propagation(X, Y, parameters, activations, learning_rat
 
 
 
-def update_parameters(parameters, grads, learning_rate):
+def update_parameters(parameters, grads, learning_rate ):
     """
     Update parameters using gradient descent
     
@@ -381,13 +389,24 @@ def update_parameters(parameters, grads, learning_rate):
     Returns:
         parameters: dictionary containing your updated parameters 
     """
-    L = len(parameters) // 3 # number of layers in the neural network; each layer has W, G, B
+    L = get_num_layers(parameters)
+    optimizer_instance = parameters.get('_optimizer_instance', None)
 
     # Update rule for each parameter. Use a for loop.
     for l in range(L):
-        parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate * grads["dW" + str(l+1)]
-        parameters["G" + str(l+1)] = parameters["G" + str(l+1)] - learning_rate * grads["dG" + str(l+1)]
-        parameters["B" + str(l+1)] = parameters["B" + str(l+1)] - learning_rate * grads["dB" + str(l+1)]
+        if optimizer_instance is not None:
+            optimizer_instance.update_parameters_once(
+                parameters, 
+                grads,
+                l + 1
+            )
+            parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate * grads["vW" + str(l+1)]
+            parameters["G" + str(l+1)] = parameters["G" + str(l+1)] - learning_rate * grads["vG" + str(l+1)]
+            parameters["B" + str(l+1)] = parameters["B" + str(l+1)] - learning_rate * grads["vB" + str(l+1)]
+        else:
+            parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate * grads["dW" + str(l+1)]
+            parameters["G" + str(l+1)] = parameters["G" + str(l+1)] - learning_rate * grads["dG" + str(l+1)]
+            parameters["B" + str(l+1)] = parameters["B" + str(l+1)] - learning_rate * grads["dB" + str(l+1)]
     
     return parameters
 

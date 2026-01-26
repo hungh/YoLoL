@@ -6,5 +6,5 @@ if __name__ == "__main__":
     bn_tiny_model.train_model()
 
 """Usage:
-python -m src.nn_app
+python -m src.classic_train
 """
