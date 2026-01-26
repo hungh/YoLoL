@@ -2,74 +2,12 @@ from sklearn.datasets import make_multilabel_classification
 from sklearn.model_selection import train_test_split
 import numpy as np
 import time
-from src.classic_nn import initialize_parameters_deep, forward_and_backward_propagation, sigmoid, custom_model_forward, BCE_WithLogitsLoss
+from src.classic_nn import initialize_parameters_deep, forward_and_backward_propagation, sigmoid, custom_model_forward
 import matplotlib.pyplot as plt
 import gc
 
+from src.classic_nn.utils import plot_dataset, multi_label_metrics
 
-def multi_label_metrics(Y_pred, Y_true):
-    from sklearn.metrics import accuracy_score, hamming_loss, f1_score
-    
-    # Convert to binary predictions
-    Y_pred_binary = (Y_pred > 0.5).astype(int)
-    
-    # Exact match ratio (strict accuracy)
-    exact_match = np.mean(np.all(Y_pred_binary == Y_true, axis=0))
-    
-    # Hamming loss (fraction of wrong labels)
-    hamming = hamming_loss(Y_true, Y_pred_binary)
-    
-    # F1 score (micro-averaged)
-    f1 = f1_score(Y_true, Y_pred_binary, average='micro')
-    
-    return {
-        'exact_match': exact_match,
-        'hamming_loss': hamming,
-        'f1_score': f1,
-        'avg_predicted': np.mean(Y_pred_binary),
-        'avg_actual': np.mean(Y_true)
-    }
-
-def plot_dataset(X, Y, max_samples=1000):
-    """
-    Plot a 2D projection of the dataset using PCA for visualization.
-    
-    Parameters:
-    -----------
-    X : numpy.ndarray
-        Input features of shape (n_features, n_samples)
-    Y : numpy.ndarray
-        Labels of shape (n_classes, n_samples)
-    max_samples : int, optional
-        Maximum number of samples to plot (for better performance)
-    """
-    from sklearn.decomposition import PCA
-    
-    # Transpose to (n_samples, n_features) for PCA
-    X = X.T
-    Y = Y.T.argmax(axis=1)  # Convert one-hot to class indices
-    
-    # Limit number of samples for better visualization
-    if X.shape[0] > max_samples:
-        indices = np.random.choice(X.shape[0], max_samples, replace=False)
-        X = X[indices]
-        Y = Y[indices]
-    
-    # Reduce to 2D using PCA
-    pca = PCA(n_components=2)
-    X_pca = pca.fit_transform(X)
-    
-    # Plot
-    plt.figure(figsize=(10, 6))
-    scatter = plt.scatter(X_pca[:, 0], X_pca[:, 1], c=Y, 
-                         cmap='viridis', alpha=0.6, 
-                         edgecolors='w', s=40)
-    plt.colorbar(scatter, label='Class')
-    plt.title('2D PCA Projection of the Dataset')
-    plt.xlabel('Principal Component 1')
-    plt.ylabel('Principal Component 2')
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.show()
 
 def load_tiny_dataset(n_samples=1000, n_features=32*32*3, n_classes=3, avg_labels=3, test_size=0.2, random_state=42):
     """
@@ -183,6 +121,7 @@ def train_model_mini_batch(X_train, Y_train, X_test, Y_test, print_cost=False, n
     input_size = X_train.shape[0]
     # layers_dims = [input_size, 256, 128, 64, 32, num_classes]
     layers_dims = [input_size, 64, 32, 16, num_classes]
+    # TODO: fix this issue with an assumption that the input is counted as one layer
     activations = ["relu"] * (len(layers_dims) - 1) + ["linear"]
         
     parameters = initialize_parameters_deep(layers_dims)  
@@ -242,7 +181,7 @@ def train_model_mini_batch(X_train, Y_train, X_test, Y_test, print_cost=False, n
         print(f"{k}: {v:.4f}")
 
 
-if __name__ == "__main__":
+def train_model():
     number_cls = 5
     plot_yes = False
     print(f"Plotting: {plot_yes}")

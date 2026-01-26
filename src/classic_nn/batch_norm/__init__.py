@@ -11,7 +11,7 @@ from ..utils import get_num_layers
 import numpy as np
 
 
-def initialize_parameters_deep(layer_dims, optimizer_instance: optimizers.Optimizers=None):
+def initialize_parameters_deep(layer_dims, optimizer_instance: optimizers.OptimizerFactory=None):
     """
     Initialize parameters for deep neural network, including batch normalization parameters. 
     
@@ -113,7 +113,7 @@ def custom_model_forward(X: np.ndarray, parameters: dict, layer_names: list[str]
     caches = []
     A = X
     L = get_num_layers(parameters)
-
+    
     # check layer_names length
     if len(layer_names) - 1 != L:
         raise ValueError(f"Layer names length {len(layer_names)} does not match parameters length {L}")

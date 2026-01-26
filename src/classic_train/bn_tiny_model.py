@@ -7,11 +7,8 @@ from sklearn.datasets import make_moons
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from ..classic_nn.batch_norm import forward_and_backward_propagation, initialize_parameters_deep, custom_model_forward
 # from ..classic_nn import forward_and_backward_propagation, initialize_parameters_deep, custom_model_forward
-from ..classic_nn.optimizers import Optimizers
-
-def generate_binary_classification_data():
-    X, Y = make_moons(n_samples=15000, noise=0.2, random_state=42)
-    return X, Y
+from ..classic_nn.optimizers import OptimizerFactory
+from ..classic_nn.data_utils import generate_binary_classification_data
 
 def train_model():
     X, Y = generate_binary_classification_data()
@@ -42,12 +39,12 @@ def train_model():
     learning_rate = 0.01
     num_iterations = 1000
     layers_dims = [2, 4, 1]
-    activations = ["relu", "relu", "linear"]
+    activations = ["relu", "relu", "sigmoid"]
     lambda_reg = 0.01
     number_of_classes = 1
     # momentum
     beta = 0.9
-    optimizer = Optimizers("momentum").get_optimizer(beta=beta)
+    optimizer = OptimizerFactory("momentum").get_optimizer(beta=beta)
     # initialize parameters
     parameters = initialize_parameters_deep(layers_dims, optimizer)
     

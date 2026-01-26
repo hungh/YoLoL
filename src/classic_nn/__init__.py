@@ -54,7 +54,7 @@ def tanh(Z):
     return A, cache
 
 
-def initialize_parameters_deep(layer_dims: list, optimizer_instance: optimizers.Optimizers=None) -> dict:
+def initialize_parameters_deep(layer_dims: list, optimizer_instance: optimizers.OptimizerFactory=None) -> dict:
     """
     Initialize parameters for deep neural network.
     
@@ -389,7 +389,7 @@ def custom_model_backward(AL, Y, caches, activations, last_activation="sigmoid",
     return grads
   
 
-def forward_and_backward_propagation(X, Y, parameters, activations, learning_rate=0.0075, num_classes=1, last_activation="sigmoid", lambda_reg=0.01, optimizer_instance: optimizers.Optimizers=None):
+def forward_and_backward_propagation(X, Y, parameters, activations, learning_rate=0.0075, num_classes=1, last_activation="sigmoid", lambda_reg=0.01, optimizer_instance: optimizers.OptimizerFactory=None):
     """
     Running forward and backward propagation on a single batch of data
     Returns cost, grads, parameters
@@ -404,7 +404,7 @@ def forward_and_backward_propagation(X, Y, parameters, activations, learning_rat
 
 
 
-def update_parameters(parameters, grads, learning_rate, optimizer_instance: optimizers.Optimizers=None):
+def update_parameters(parameters, grads, learning_rate, optimizer_instance: optimizers.OptimizerFactory=None):
     """
     Update parameters using gradient descent
     

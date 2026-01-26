@@ -1,4 +1,4 @@
-class Optimizers:
+class OptimizerFactory:
     """
     Optimizers class for selecting and initializing optimizers.
     """
