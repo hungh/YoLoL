@@ -2,10 +2,8 @@
 Classic batch normalization implementation.
 """
 
-# IN PROGRESS..... Do not use 
-
-from classic_nn.regularization import L2_regularization 
-from classic_nn.activation import sigmoid, relu, tanh
+from ..regularization import L2_regularization 
+from .. import sigmoid, relu, tanh
 
 import numpy as np
 
@@ -106,7 +104,7 @@ def custom_model_forward(X: np.ndarray, parameters: dict, layer_names: list[str]
     """
     caches = []
     A = X
-    L = len(parameters) // 2
+    L = len(parameters) // 3 # each layer has W, G, B
 
     # check layer_names length
     if len(layer_names) - 1 != L:
@@ -159,7 +157,7 @@ def  BCE_WithLogitsLoss(AL, Y, parameters: dict, from_logits: bool = True, lambd
     cost = -np.sum(Y * np.log(AL + 1e-15) + (1 - Y) * np.log(1 - AL + 1e-15)) / m
     
     # Make sure to reshape the cost to avoid nested arrays
-    cost = np.squeeze(cost) + L2_regularization(m, parameters, lambda_reg)
+    cost = np.squeeze(cost) + L2_regularization(m, parameters, lambda_reg, use_batch_norm=True)
     return cost
 
 
@@ -185,25 +183,28 @@ def linear_backward(dZ, cache, lambda_reg=None):
     
     # Gradient through batch norm
     dZ_norm = dZ * G
+
+    # convert back to the original Z using Z_norm, var, and epsilon
+    Z = Z_norm * np.sqrt(var + epsilon) + mean
     
     # Gradient of variance
-    dvar = np.sum(dZ_norm * (A_prev - mean) * -0.5 * (var + epsilon)**(-1.5), axis=1, keepdims=True)
+    dvar = np.sum(dZ_norm * (Z - mean) * -0.5 * (var + epsilon)**(-1.5), axis=1, keepdims=True)
     
     # Gradient of mean
     dmean = np.sum(dZ_norm * -1 / np.sqrt(var + epsilon), axis=1, keepdims=True) + \
-            dvar * np.sum(-2 * (A_prev - mean), axis=1, keepdims=True) / m
+            dvar * np.sum(-2 * (Z - mean), axis=1, keepdims=True) / m
     
     # Gradient of Z (before batch norm)
     dZ_prev = (dZ_norm / np.sqrt(var + epsilon)) + \
-              (dvar * 2 * (A_prev - mean) / m) + \
+              (dvar * 2 * (Z - mean) / m) + \
               (dmean / m)
-    
+  
     # Gradient of weights
     dW = np.dot(dZ_prev, A_prev.T) / m
     if lambda_reg is not None:
         dW += (lambda_reg / m) * W
-    
-    # Gradient w.r.t. previous layer's activations
+            
+    # Gradient w.r.t. previous layer's activations    
     dA_prev = np.dot(W.T, dZ_prev)
     
     return dA_prev, dW, dG, dB
@@ -226,7 +227,7 @@ def relu_backward(dA, cache):
         dG: Gradient of the cost with respect to the scale parameter gamma
         dB: Gradient of the cost with respect to the shift parameter beta
     """
-    Z, _ = cache
+    Z = cache
     dZ = np.array(dA, copy=True)  # Just converting dA to a correct object
     
     # When z <= 0, set dz to 0
@@ -235,7 +236,7 @@ def relu_backward(dA, cache):
     return dZ
 
 
-def sigmoid_backward(dA, cache, reg_lambda=None):
+def sigmoid_backward(dA, cache):
     """
     Implement the backward propagation for the SIGMOID function.
     
@@ -249,7 +250,7 @@ def sigmoid_backward(dA, cache, reg_lambda=None):
     Returns:
         dZ: Gradient of the cost with respect to Z
     """
-    Z, _ = cache
+    Z = cache
     s = 1/(1+np.exp(-Z))
     dZ = dA * s * (1-s)
     return dZ
@@ -268,7 +269,7 @@ def tanh_backward(dA, cache):
     Returns:
         dZ: Gradient of the cost with respect to Z
     """
-    Z, _ = cache
+    Z = cache
     dZ = dA * (1 - np.tanh(Z)**2)
    
     return dZ
@@ -295,7 +296,7 @@ def linear_activation_backward(dA, cache, activation, lambda_reg=0.01):
         # Pass through the linear backward pass
         dA_prev, dW, dG, dB = linear_backward(dZ, linear_cache, lambda_reg)
     elif activation == "sigmoid":
-        dZ = sigmoid_backward(dA, activation_cache)
+        dZ = sigmoid_backward(dA, activation_cache)        
         # Pass through the linear backward pass
         dA_prev, dW, dG, dB = linear_backward(dZ, linear_cache, lambda_reg)
     elif activation == "tanh":
@@ -327,7 +328,7 @@ def custom_model_backward(AL, Y, caches, activations, last_activation="sigmoid",
         grads: A dictionary with the gradients
     """
     grads = {}
-    L = len(caches) # the number of layers    
+    L = len(caches) # the number of layers        
     Y = Y.reshape(AL.shape) # Y is the same shape as AL
 
     if last_activation == "sigmoid":
@@ -390,7 +391,7 @@ def update_parameters(parameters, grads, learning_rate):
     
     return parameters
 
-    
+
 
 def gradient_check(parameters, gradients, X, Y, epsilon=1e-7):
     # TODO Implementation of gradient checking

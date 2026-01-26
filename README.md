@@ -40,6 +40,12 @@ The model is a deep neural network with the following architecture:
    ```bash
    git clone https://github.com/hungh/YoLoL
    cd YoLoL
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -e .
+   ```
 
 ## When to Use This Model
 
