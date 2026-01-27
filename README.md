@@ -85,7 +85,7 @@ The model is a deep neural network with the following architecture:
 
 ## Package Structure
 
-```mermaid
+```
 src/
 ├── classic_nn/                    # Core neural network implementation
 │   ├── __init__.py                # Main neural network functions (forward, backward, parameter updates)
