@@ -1,5 +1,5 @@
 """
-Regularization for the classic nn
+Regularization for the classic nn (neural network)
 """
 
 import numpy as np

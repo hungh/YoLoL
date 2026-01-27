@@ -10,7 +10,15 @@ class RMSProp:
     
     def update_parameters_once(self, parameters, grads, layer_index: int, learning_rate: float):
         """
-        Update parameters using RMS Prop. 
+        Update parameters using RMS Prop. The following parameters are updated:
+            - sW: squared gradient of weights
+            - sG: squared gradient of gamma (for batch normalization)
+            - sB: squared gradient of beta (for batch normalization)
+            - sb: squared gradient of biases (for non-batch normalization)
+            - W: weights
+            - G: gamma (for batch normalization)
+            - B: beta (for batch normalization)
+            - b: biases (for non-batch normalization)
         """
         if "_batch_norm" in parameters:
             parameters["sW" + str(layer_index)] = self.beta * parameters["sW" + str(layer_index)] + (1 - self.beta) * grads["dW" + str(layer_index)] ** 2
@@ -26,6 +34,12 @@ class RMSProp:
         parameters["W" + str(layer_index)] = parameters["W" + str(layer_index)] - learning_rate * grads["dW" + str(layer_index)] / (np.sqrt(parameters["sW" + str(layer_index)] + self.epsilon) + self.epsilon)
         
     def initialize_parameters(self, parameters, layer_dims):
+        """
+        Initialize the RMS Prop parameters.
+        Input:
+            parameters: The parameters to initialize.
+            layer_dims: The dimensions of the layers. NOTE: layer_dims should include the input layer.
+        """
         if '_batch_norm' in parameters:
             for l in range(1, len(layer_dims)):
                 parameters["sW" + str(l)] = np.zeros((layer_dims[l], layer_dims[l-1]))

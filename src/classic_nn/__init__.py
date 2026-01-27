@@ -1,57 +1,11 @@
 """
 Classic neural network implementations for comparison with YOLO models.
 """
-from .regularization import L2_regularization 
 import numpy as np
 from . import optimizers
 from .utils import get_num_layers
-
-
-def sigmoid(Z):
-    """
-    Implement the sigmoid activation function.
-    
-    Arguments:
-        Z: numpy array of any shape
-    
-    Returns:
-        A: the output of the sigmoid function
-        cache: a python tuple containing "Z" for backward propagation
-    """
-    A = 1/(1+np.exp(-Z))
-    cache = Z
-    return A, cache
-
-def relu(Z):
-    """
-    Implement the ReLU activation function.
-    
-    Arguments:
-        Z: numpy array of any shape
-    
-    Returns:
-        A: the output of the ReLU function
-        cache: a python tuple containing "Z" for backward propagation
-    """
-    A = np.maximum(0, Z)
-    cache = Z
-    return A, cache
-
-
-def tanh(Z):
-    """
-    Implement the tanh activation function.
-    
-    Arguments:
-        Z: numpy array of any shape
-    
-    Returns:
-        A: the output of the tanh function
-        cache: a python tuple containing "Z" for backward propagation
-    """
-    A = np.tanh(Z)
-    cache = Z
-    return A, cache
+from .math import sigmoid, tanh, relu
+from .loss import BCE_WithLogitsLoss
 
 
 def initialize_parameters_deep(layer_dims: list, optimizer_instance: optimizers.OptimizerFactory=None) -> dict:
@@ -197,38 +151,6 @@ def custom_model_forward(X: np.ndarray, parameters: dict, layer_names: list[str]
     
     return A, caches
 
-
-# implementation of binary cross entropy logits loss (similar to torch.nn.BCEWithLogitsLoss)
-def  BCE_WithLogitsLoss(AL, Y, parameters: dict, from_logits: bool = True, lambda_reg: float = 0.01) -> float:
-    """
-    Implement binary cross entropy logits loss
-    
-    Arguments:
-        AL: probability vector, output of forward propagation
-        Y: true "label" vector
-    
-    Returns:
-        cost: cost value
-    """
-    # ensure AL and Y are the same shape if
-    if AL.shape != Y.shape:
-        if AL.shape == Y.T.shape:
-            Y = Y.T
-        else:
-            raise ValueError(f"AL shape {AL.shape} does not match Y shape {Y.shape}")
-    
-    m = Y.shape[1]
-    
-    if from_logits:        
-        AL = 1. / (1. + np.exp(-AL))
-        AL = np.clip(AL, 1e-15, 1 - 1e-15)  
-    
-    # Compute the cross-entropy cost
-    cost = -np.sum(Y * np.log(AL + 1e-15) + (1 - Y) * np.log(1 - AL + 1e-15)) / m
-    
-    # Make sure to reshape the cost to avoid nested arrays
-    cost = np.squeeze(cost) + L2_regularization(m, parameters, lambda_reg)
-    return cost
 
 
 def linear_backward(dZ, cache, lambda_reg=None):
@@ -389,7 +311,7 @@ def custom_model_backward(AL, Y, caches, activations, last_activation="sigmoid",
     return grads
   
 
-def forward_and_backward_propagation(X, Y, parameters, activations, learning_rate=0.0075, num_classes=1, last_activation="sigmoid", lambda_reg=0.01, optimizer_instance: optimizers.OptimizerFactory=None):
+def gradient_descent(X, Y, parameters, activations, learning_rate=0.0075, num_classes=1, last_activation="sigmoid", lambda_reg=0.01, optimizer_instance: optimizers.OptimizerFactory=None):
     """
     Running forward and backward propagation on a single batch of data
     Returns cost, grads, parameters

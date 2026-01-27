@@ -9,6 +9,13 @@ class OptimizerFactory:
        
 
     def get_optimizer(self, **kwargs):
+        """
+        Get the optimizer instance.
+        Input:
+            **kwargs: Additional arguments to pass to the optimizer.
+        Returns:
+            The optimizer instance.
+        """
         if self.name == "adam":
             from .adam import Adam
             self.current_optimizer = Adam(**kwargs)            
@@ -19,7 +26,7 @@ class OptimizerFactory:
             from .rms_prop import RMSProp
             self.current_optimizer = RMSProp(**kwargs)         
         else:
-            raise ValueError("Invalid optimizer name")
+            raise ValueError(f"Invalid optimizer name: {self.name}")
 
         return self.current_optimizer
 
@@ -29,9 +36,20 @@ class OptimizerFactory:
        
 
     def initialize_parameters(self, parameters, layer_dims):
+        """
+        Initialize the optimizer parameters.
+        Input:
+            parameters: The parameters to initialize.
+            layer_dims: The dimensions of the layers.
+        """
         self.validate_instance()
         self.current_optimizer.initialize_parameters(parameters, layer_dims)
 
     
     def __str__(self):
+        """
+        Return the name of the optimizer.
+        Returns:
+            The name of the optimizer.
+        """
         return self.name

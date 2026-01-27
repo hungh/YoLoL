@@ -7,6 +7,15 @@ class Momentum:
     def update_parameters_once(self, parameters, grads, layer_index: int, learning_rate: float):
         """
         Update parameters using momentum. 
+        The following parameters are updated:
+            - vW: velocity of weights
+            - vG: velocity of gamma (for batch normalization)
+            - vB: velocity of beta (for batch normalization)
+            - vb: velocity of biases (for non-batch normalization)
+            - W: weights
+            - G: gamma (for batch normalization)
+            - B: beta (for batch normalization)
+            - b: biases (for non-batch normalization)
         """
         parameters["vW" + str(layer_index)] = self.beta * parameters["vW" + str(layer_index)] + (1 - self.beta) * grads["dW" + str(layer_index)]
 
@@ -26,6 +35,12 @@ class Momentum:
 
         
     def initialize_parameters(self, parameters, layer_dims):
+        """
+        Initialize the momentum parameters.
+        Input:
+            parameters: The parameters to initialize.
+            layer_dims: The dimensions of the layers. NOTE: layer_dims should include the input layer.
+        """
         if '_batch_norm' in parameters:
             for l in range(1, len(layer_dims)):
                 parameters["vW" + str(l)] = np.zeros((layer_dims[l], layer_dims[l-1]))
