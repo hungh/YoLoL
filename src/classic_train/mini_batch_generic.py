@@ -23,6 +23,7 @@ class MiniBatchTrainer:
         self.optimizer_name = None     
         self.lambda_reg = 0.01   
         self.logits = False
+        self.prediction_threshold = 0.5
 
     def set_optimizer(self, optimizer_name, **kwargs):
         self.optimizer_name = optimizer_name
@@ -31,6 +32,9 @@ class MiniBatchTrainer:
     def set_validation_data(self, X_val, Y_val):
         self.X_val = X_val
         self.Y_val = Y_val
+    
+    def set_prediction_threshold(self, threshold):
+        self.prediction_threshold = threshold
 
     def set_regularization(self, lambda_reg):
         """
@@ -41,9 +45,8 @@ class MiniBatchTrainer:
         """
         self.lambda_reg = lambda_reg
 
-    def logits(self):
-        self.logits = True
-        return self
+    def enable_logits(self):
+        self.logits = True        
     
     def adjust_predictions(self, A, last_activation):
         """
@@ -57,7 +60,7 @@ class MiniBatchTrainer:
             Y_pred: Adjusted predictions
         """
         # adjust predictions after apply sigmoid
-        if self.logits and last_activation == "sigmoid":
+        if self.logits or last_activation == "sigmoid":
             Y_pred, _ = sigmoid(A)
         else:
             Y_pred = A
@@ -71,7 +74,7 @@ class MiniBatchTrainer:
         assert self.layers_dims is not None, "Layer dimensions must be provided"
         assert len(self.layers_dims) > 0, "Layer dimensions must not be empty"
         assert self.activations is not None, "Activations must be provided"
-        assert len(self.activations) == len(self.layers_dims), "Activations must match layer dimensions"
+        assert len(self.activations) == (len(self.layers_dims) - 1), "Activations must match layer dimensions"
         # make sure trainig and validation datasets have been set
         assert self.X_train is not None, "Training dataset must be provided"
         assert self.Y_train is not None, "Training labels must be provided"        
@@ -155,7 +158,7 @@ class MiniBatchTrainer:
         # calculate the accuracy of train set
         A_train, _ = custom_model_forward(self.X_train, parameters, self.activations, self.num_classes, apply_sigmoid=(last_activation == "sigmoid"))
         Y_pred_train = self.adjust_predictions(A_train, last_activation)
-        metrics_train = multi_label_metrics(Y_pred_train, self.Y_train)
+        metrics_train = multi_label_metrics(Y_pred_train, self.Y_train, prediction_threshold=self.prediction_threshold)
         print("Train Metrics:")
         for k, v in metrics_train.items():
             print(f"{k}: {v:.4f}")
@@ -166,7 +169,7 @@ class MiniBatchTrainer:
             # adjust predictions based on last activation
             Y_pred = self.adjust_predictions(A, last_activation)
             
-            metrics = multi_label_metrics(Y_pred, self.Y_val)
+            metrics = multi_label_metrics(Y_pred, self.Y_val, prediction_threshold=self.prediction_threshold)
             print("Validation Metrics:")
             for k, v in metrics.items():
                 print(f"{k}: {v:.4f}")           

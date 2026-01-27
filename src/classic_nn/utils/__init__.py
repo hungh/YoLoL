@@ -22,11 +22,11 @@ def get_num_layers(parameters: dict) -> int:
     return layers
 
 
-def multi_label_metrics(Y_pred, Y_true):
+def multi_label_metrics(Y_pred, Y_true, prediction_threshold: float = 0.5):
     from sklearn.metrics import hamming_loss, f1_score
     
     # Convert to binary predictions
-    Y_pred_binary = (Y_pred > 0.5).astype(int)
+    Y_pred_binary = (Y_pred > prediction_threshold).astype(int)
     
     # Exact match ratio (strict accuracy)
     exact_match = np.mean(np.all(Y_pred_binary == Y_true, axis=0))

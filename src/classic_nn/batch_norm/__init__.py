@@ -82,7 +82,10 @@ def linear_activation_forward(A_prev, W, G, B, activation):
         A: the output of the activation function
         cache: a python tuple containing "linear_cache" and "activation_cache"
     """
-    if activation == 'sigmoid':
+    if activation == 'linear':
+        Z, linear_cache = linear_forward(A_prev, W, G, B)
+        A, activation_cache = Z, None
+    elif activation == 'sigmoid':
         Z, linear_cache = linear_forward(A_prev, W, G, B)
         A, activation_cache = sigmoid(Z)
     elif activation == 'relu':
@@ -115,17 +118,22 @@ def custom_model_forward(X: np.ndarray, parameters: dict, layer_names: list[str]
     L = get_num_layers(parameters)
     
     # check layer_names length
-    if len(layer_names) - 1 != L:
+    if len(layer_names) != L:
         raise ValueError(f"Layer names length {len(layer_names)} does not match parameters length {L}")
     
     for l in range(1, L + 1):
         A_prev = A
 
-        activation = layer_names[l -1]
-        if activation not in ['relu', 'tanh', 'sigmoid']:
-            raise ValueError(f"Unsupported activation: {activation}")
-
-        current_activation = 'sigmoid' if (l == L and apply_sigmoid) else 'relu'
+        intented_activation = layer_names[l -1]
+        
+        if l == L and apply_sigmoid:
+            current_activation = 'sigmoid'
+        else:
+            current_activation = intented_activation
+        
+        # validate the activation
+        if current_activation not in ['relu', 'tanh', 'sigmoid', 'linear']:
+            raise ValueError(f"Unsupported activation: {current_activation}")
 
         A, cache = linear_activation_forward(A_prev, parameters['W' + str(l)], parameters['G' + str(l)], parameters['B' + str(l)], current_activation)
         caches.append(cache)
@@ -398,11 +406,9 @@ def update_parameters(parameters, grads, learning_rate ):
             optimizer_instance.update_parameters_once(
                 parameters, 
                 grads,
-                l + 1
-            )
-            parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate * grads["vW" + str(l+1)]
-            parameters["G" + str(l+1)] = parameters["G" + str(l+1)] - learning_rate * grads["vG" + str(l+1)]
-            parameters["B" + str(l+1)] = parameters["B" + str(l+1)] - learning_rate * grads["vB" + str(l+1)]
+                l + 1,
+                learning_rate
+            )            
         else:
             parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate * grads["dW" + str(l+1)]
             parameters["G" + str(l+1)] = parameters["G" + str(l+1)] - learning_rate * grads["dG" + str(l+1)]

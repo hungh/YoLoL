@@ -4,12 +4,25 @@ class Momentum:
     def __init__(self, beta: float):
         self.beta = beta
     
-    def update_parameters_once(self, parameters, grads, layer_index: int):
+    def update_parameters_once(self, parameters, grads, layer_index: int, learning_rate: float):
         """
         Update parameters using momentum. 
         """
         parameters["vW" + str(layer_index)] = self.beta * parameters["vW" + str(layer_index)] + (1 - self.beta) * grads["dW" + str(layer_index)]
-        parameters["vb" + str(layer_index)] = self.beta * parameters["vb" + str(layer_index)] + (1 - self.beta) * grads["db" + str(layer_index)]
+
+        if '_batch_norm' in parameters:
+            parameters["vG" + str(layer_index)] = self.beta * parameters["vG" + str(layer_index)] + (1 - self.beta) * grads["dG" + str(layer_index)]
+            parameters["vB" + str(layer_index)] = self.beta * parameters["vB" + str(layer_index)] + (1 - self.beta) * grads["dB" + str(layer_index)]
+            parameters["G" + str(layer_index)] = parameters["G" + str(layer_index)] - learning_rate * parameters["vG" + str(layer_index)]
+            parameters["B" + str(layer_index)] = parameters["B" + str(layer_index)] - learning_rate * parameters["vB" + str(layer_index)]
+            
+        else:
+            parameters["vb" + str(layer_index)] = self.beta * parameters["vb" + str(layer_index)] + (1 - self.beta) * grads["db" + str(layer_index)]
+            parameters["b" + str(layer_index)] = parameters["b" + str(layer_index)] - learning_rate * parameters["vb" + str(layer_index)]
+
+        parameters["W" + str(layer_index)] = parameters["W" + str(layer_index)] - learning_rate * parameters["vW" + str(layer_index)]
+        
+        
 
         
     def initialize_parameters(self, parameters, layer_dims):

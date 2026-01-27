@@ -32,7 +32,7 @@ print(f"Y_dev shape: {Y_dev.shape}")
 # hyperparameters
 learning_rate = 0.001
 num_epochs = 1000
-layers_dims = [2, 4, 1]
+layers_dims = [X_train.shape[0], 2, 4, 1]
 activations = ["relu", "relu", "sigmoid"]
 num_classes = 1
 mini_batch_size = 64

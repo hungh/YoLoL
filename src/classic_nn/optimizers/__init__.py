@@ -14,7 +14,10 @@ class OptimizerFactory:
             self.current_optimizer = Adam(**kwargs)            
         elif self.name == "momentum":
             from .momentum import Momentum
-            self.current_optimizer = Momentum(**kwargs)                        
+            self.current_optimizer = Momentum(**kwargs)       
+        elif self.name == "rms_prop":
+            from .rms_prop import RMSProp
+            self.current_optimizer = RMSProp(**kwargs)         
         else:
             raise ValueError("Invalid optimizer name")
 
@@ -26,7 +29,7 @@ class OptimizerFactory:
        
 
     def initialize_parameters(self, parameters, layer_dims):
-        self.validate_instance(self)
+        self.validate_instance()
         self.current_optimizer.initialize_parameters(parameters, layer_dims)
 
     
