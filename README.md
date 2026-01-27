@@ -4,11 +4,47 @@
 This project implements a custom deep learning model for multi-label classification of fruits and vegetables in images. It serves as an alternative to YOLO for produce detection, focusing on classification accuracy rather than real-time object detection.
 
 ## Purpose
-- **Verification**: Validate the accuracy of a custom neural network against traditional object detection models
-- **Education**: Demonstrate the implementation of a multi-label classification system from scratch
-- **Performance Comparison**: Provide a baseline for comparing with YOLO's performance
+- **Learning & Development**: Build deep learning expertise through hands-on implementation
+- **CNN Implementation**: Develop convolutional neural networks for image classification
+- **Skill Development**: Generate mental trace and deep understanding of CNN architectures
+- **Educational Journey**: Progress from classic NN to advanced CNN techniques
+- **Performance Exploration**: Train on full YOLO dataset to understand CNN capabilities
 
-## Model Architecture
+## Model Architecture (classic implementation for CPU training)
+### Phase 1: Classic Neural Network (Completed)
+- **Input**: Flattened image features
+- **Hidden Layers**: Dense layers with ReLU activation
+- **Output**: Multi-label classification with sigmoid
+### Phase 2: Convolutional Neural Network (Current)
+- **Input**: Full YOLO dataset images (maintaining spatial structure)
+- **Architecture**: CNN layers with convolution, pooling, and dense layers
+- **Goal**: Learn CNN implementation and training on real-world image data
+- **Focus**: Skill development rather than beating YOLO performance
+### Phase 3: Directly use the YoLo library
+- **Input**: Full YOLO dataset images (maintaining spatial structure)
+- **Architecture**: Use pre-trained YoLo model for classification
+- **Goal**: Learn how to use pre-trained models and fine-tune them for specific tasks
+- **Focus**: Skill development rather than beating YOLO performance
+## CNN Implementation Goals
+- **Educational**: Master CNN concepts through practical implementation
+- **Hands-on Experience**: Work with real image datasets and CNN architectures
+- **Deep Learning Skills**: Develop comprehensive understanding of:
+  - Convolutional layers and feature extraction
+  - Pooling layers and spatial dimensionality reduction
+  - CNN-specific optimization techniques
+  - Image preprocessing and augmentation
+- **Mental Trace**: Build strong foundation for future deep learning projects
+## Training Dataset
+- **Source**: Full YOLO image dataset
+- **Scale**: Large-scale image classification task
+- **Complexity**: Real-world produce images with varying conditions
+- **Purpose**: Practice CNN implementation on substantial dataset
+## Performance Expectations
+- **Primary Goal**: Learning and skill development
+- **Secondary**: Achieve reasonable classification performance
+- **Benchmark**: Personal improvement and understanding rather than YOLO competitio
+
+## Model Architecture (using PyTorch with CUDA support)
 The model is a deep neural network with the following architecture:
 - Input: 64x64x3 RGB images (flattened to 12,288 features)
 - Hidden Layers: 
@@ -74,29 +110,3 @@ The model is a deep neural network with the following architecture:
 ### Training Data
 - **This Model**: Requires pre-processed crops
 - **YOLO**: Works with raw images and annotations
-
-### Flexibility
-- **This Model**: Fixed input size
-- **YOLO**: Handles various input sizes
-
-### Deployment
-- **This Model**: Easier to deploy for simple classification
-- **YOLO**: Requires more resources but offers more features
-
-## Performance Considerations
-
-### This Model
-- Lower memory footprint
-- Faster inference for classification
-- Easier to train and debug
-- Better suited for embedded systems
-
-### YOLO
-- Higher accuracy for detection tasks
-- More versatile for real-world applications
-- Better at handling multiple objects
-- More complex to train and optimize
-
-## Conclusion
-
-This custom model serves as an excellent starting point for understanding deep learning for computer vision and provides a solid baseline for classification tasks. However, for production environments requiring object detection, YOLO or similar models would be more appropriate despite their higher computational requirements.
