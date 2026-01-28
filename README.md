@@ -1,7 +1,7 @@
 # Custom Multi-Label Image Classifier for Produce Detection
 
 ## Overview
-This project implements a custom deep learning model for multi-label classification of fruits and vegetables in images. It serves as an alternative to YOLO for produce detection, focusing on classification accuracy rather than real-time object detection.
+This project implements a custom deep learning model for multi-label classification of fruits and vegetables using the YoLo dataset. It serves as an alternative to YOLO for produce detection, focusing on classification accuracy rather than real-time object detection.
 
 ## Purpose
 - **Learning & Development**: Build deep learning expertise through hands-on implementation
@@ -83,6 +83,18 @@ The model is a deep neural network with the following architecture:
    pip install -e .
    ```
 
+3. Run the training script:
+   ```bash
+   python -m src.classic_train model_name
+   
+   # Available models:
+   # python -m src.classic_train binary
+   # python -m src.classic_train multi_label
+   # python -m src.classic_train batch_norm
+   # python -m src.classic_train binary_adam
+   # python -m src.classic_train multi_label_adam
+   ```
+
 ## Package Structure
 
 ```
@@ -103,6 +115,8 @@ src/
 │   │   └── __init__.py           # Sigmoid, ReLU, Tanh activation functions
 │   ├── optimizers/               # Optimization algorithms
 │   │   ├── __init__.py           # Optimizer factory (Adam, Momentum, RMSProp)
+│   │   ├── adam/                 # Adam optimizer implementation
+│   │   │   └── __init__.py       # Adaptive moment estimation with bias correction
 │   │   ├── momentum/             # Momentum optimizer implementation
 │   │   │   └── __init__.py       # Velocity-based parameter updates
 │   │   └── rms_prop/             # RMSProp optimizer implementation
@@ -112,16 +126,35 @@ src/
 │   └── utils/                    # Utility functions
 │       ├── __init__.py           # PCA plotting, decision boundaries, cost plotting
 │       └── eval.py               # Model evaluation utilities
+├── classic_cnn/                  # Convolutional Neural Network implementation
+│   ├── __init__.py               # CNN package initialization
+│   ├── backward/                 # Backward propagation for CNN layers
+│   │   └── __init__.py           # Convolution backward pass implementation
+│   ├── forward/                  # Forward propagation for CNN layers
+│   │   └── __init__.py           # Convolution forward pass implementation
+│   ├── pooling/                  # Pooling layer implementations
+│   │   ├── __init__.py           # Pooling package initialization
+│   │   ├── forward/              # Forward pooling operations
+│   │   │   └── __init__.py       # Max and average pooling forward pass
+│   │   ├── backward/             # Backward pooling operations
+│   │   │   └── __init__.py       # Max and average pooling backward pass
+│   │   └── utils/                # Pooling utility functions
+│   │       └── __init__.py       # Mask creation and value distribution
+│   └── utils/                    # CNN utility functions
+│       └── __init__.py           # Zero padding and other CNN utilities
 ├── classic_train/                # Training scripts and trainers
 │   ├── __init__.py               # Package initialization
 │   ├── __main__.py               # Main entry point for training
 │   ├── binary_model.py           # Binary classification training script
 │   ├── multi_label_model.py      # Multi-label classification training script
 │   ├── batch_norm_model.py       # Batch normalization training script
+│   ├── binary_model_adam.py      # Binary classification with Adam optimizer
+│   ├── multi_label_model_adam.py # Multi-label classification with Adam optimizer
 │   ├── mini_batch_generic.py     # Deprecated mini-batch trainer (backward compatibility)
 │   └── mini_batch/               # Mini-batch training package
 │       ├── __init__.py           # Package initialization
 │       ├── trainer.py            # MiniBatchTrainer class for training loops
+│       ├── trainer_with_adam.py   # TrainerWithAdam class with Adam optimizer integration
 │       ├── metrics.py            # Multi-label evaluation metrics
 │       └── utils.py              # Mini-batch data generation utilities
 ├── inference/                    # Model inference utilities
