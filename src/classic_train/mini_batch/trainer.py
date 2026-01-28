@@ -10,6 +10,7 @@ from src.classic_nn.utils import pca_plot_dataset
 from src.classic_nn.optimizers import OptimizerFactory
 from src.classic_nn.utils import plot_costs, plot_decision_boundary
 from src.classic_nn.utils.eval import predict, evaluate_model
+from src.classic_nn.optimizers.adam import Adam
 
 from .metrics import multi_label_metrics
 from .utils import mini_batch_generator as mb_gen   
@@ -119,6 +120,10 @@ class MiniBatchTrainer:
             evaluate_model(self.X_val, self.Y_val, parameters, self.activations, num_classes=self.num_classes, last_activation=last_activation, 
             prediction_threshold=self.prediction_threshold, adjust_prediction_func=self.adjust_predictions)
 
+    # to be implemented by subclasses, additional updates to parameters (such as ones used in Adam optimizer)
+    def abstract_update_mb_t(self, parameters, mb_t):
+        pass
+
     def __str__(self):
         return f"MiniBatchTrainer(optimizer={self.optimizer_name}, learning_rate={self.learning_rate}, mini_batch_size={self.mini_batch_size}, num_epochs={self.num_epochs})"
         
@@ -148,7 +153,9 @@ class MiniBatchTrainer:
 
         start_time = time.time()
         
-        optimizer_instance = OptimizerFactory(self.optimizer_name).get_optimizer(**self.optimizer_kwargs)
+        # initialize optimizer
+        print(f"Optimizer arguments: {self.optimizer_kwargs}")
+        optimizer_instance = OptimizerFactory(self.optimizer_name).get_optimizer(**self.optimizer_kwargs) if self.optimizer_kwargs else OptimizerFactory(self.optimizer_name).get_optimizer()
         parameters = initialize_parameters_deep(self.layers_dims, optimizer_instance)  
         
         estimated_batches = (self.X_train.shape[1] + self.mini_batch_size - 1) // self.mini_batch_size
@@ -158,8 +165,12 @@ class MiniBatchTrainer:
 
         for epoch in range(self.num_epochs):
             epoch_cost = 0
-            num_batches = 0       
-            for X_batch, Y_batch in mb_gen(self.X_train, self.Y_train, self.mini_batch_size):
+            num_batches = 0    
+            mb_t = 1 # the mini batch iteration index if Adam is used
+            for X_batch, Y_batch in mb_gen(self.X_train, self.Y_train, self.mini_batch_size):            
+
+                self.abstract_update_mb_t(parameters, mb_t)
+                
                 # the parameters will be updated in this function
                 cost, _, _ = gradient_descent(X_batch, Y_batch, parameters, self.activations,
                 num_classes=self.num_classes,
@@ -169,6 +180,7 @@ class MiniBatchTrainer:
                 del X_batch, Y_batch         
                 num_batches += 1
                 epoch_cost += cost
+                mb_t += 1
 
                 # Print progress
                 print(f"\rEpoch {epoch+1}: {num_batches/estimated_batches*100:.1f}% complete", end='', flush=True)

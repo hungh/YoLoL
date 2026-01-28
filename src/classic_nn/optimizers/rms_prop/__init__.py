@@ -49,3 +49,6 @@ class RMSProp:
             for l in range(1, len(layer_dims)):
                 parameters["sW" + str(l)] = np.zeros((layer_dims[l], layer_dims[l-1]))
                 parameters["sb" + str(l)] = np.zeros((layer_dims[l], 1))
+
+    def __str__(self):
+        return f"RMSProp(beta={self.beta})"

@@ -1,0 +1,14 @@
+# Run all tests
+pytest
+
+# Run specific package
+pytest test/classic_train/
+
+# Run specific file
+pytest test/classic_train/mini_batch/test_trainer_with_adam.py
+
+# Run with verbose output
+pytest -v
+
+# Run with coverage
+pytest --cov=src
