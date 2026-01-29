@@ -70,3 +70,4 @@ htmlcov/
 # Project specific
 *.pth
 *.pt
+logs/

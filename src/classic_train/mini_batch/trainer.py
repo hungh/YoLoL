@@ -10,10 +10,11 @@ from src.classic_nn.utils import pca_plot_dataset
 from src.classic_nn.optimizers import OptimizerFactory
 from src.classic_nn.utils import plot_costs, plot_decision_boundary
 from src.classic_nn.utils.eval import predict, evaluate_model
-from src.classic_nn.optimizers.adam import Adam
+from src.history import TrainingHistoryWriter
 
 from .metrics import multi_label_metrics
 from .utils import mini_batch_generator as mb_gen   
+
 
 
 
@@ -38,10 +39,17 @@ class MiniBatchTrainer:
         self.logits = False
         self.prediction_threshold = 0.5
         self.plot_input_data = plot_input_data
+        self.decay_function = None
+        self.decay_function_kwargs = {}
+        self.history_writer = TrainingHistoryWriter()
 
     def set_optimizer(self, optimizer_name, **kwargs):
         self.optimizer_name = optimizer_name
         self.optimizer_kwargs = kwargs
+
+    def set_learning_rate_decay(self, decay_function: callable, **kwargs):
+        self.decay_function = decay_function
+        self.decay_function_kwargs = kwargs
     
     def set_validation_data(self, X_val, Y_val):
         self.X_val = X_val
@@ -162,43 +170,49 @@ class MiniBatchTrainer:
         print(f"Estimated batches per epoch: {estimated_batches}")
 
         print_cost_every = max(1, self.num_epochs // 100)
+        
+        try:
+            for epoch in range(self.num_epochs):
+                epoch_cost = 0
+                num_batches = 0    
+                mb_t = 1 # the mini batch iteration index if Adam is used
+                dc_learning_rate = self.decay_function(epoch, **self.decay_function_kwargs) if self.decay_function else self.learning_rate
+                for X_batch, Y_batch in mb_gen(self.X_train, self.Y_train, self.mini_batch_size):            
 
-        for epoch in range(self.num_epochs):
-            epoch_cost = 0
-            num_batches = 0    
-            mb_t = 1 # the mini batch iteration index if Adam is used
-            for X_batch, Y_batch in mb_gen(self.X_train, self.Y_train, self.mini_batch_size):            
+                    self.abstract_update_mb_t(parameters, mb_t)
+                    
+                    # the parameters will be updated in this function
+                    cost, _, _ = gradient_descent(X_batch, Y_batch, parameters, self.activations,
+                    num_classes=self.num_classes,
+                    learning_rate=dc_learning_rate, last_activation=last_activation, lambda_reg=self.lambda_reg)               
+                                
+                    # clean up memory
+                    del X_batch, Y_batch         
+                    num_batches += 1
+                    epoch_cost += cost
+                    mb_t += 1
 
-                self.abstract_update_mb_t(parameters, mb_t)
+                    # Print progress
+                    print(f"\rEpoch {epoch+1}: {num_batches/estimated_batches*100:.1f}% complete", end='', flush=True)
+
+                epoch_cost  = epoch_cost / num_batches
                 
-                # the parameters will be updated in this function
-                cost, _, _ = gradient_descent(X_batch, Y_batch, parameters, self.activations,
-                num_classes=self.num_classes,
-                learning_rate=self.learning_rate, last_activation=last_activation, lambda_reg=self.lambda_reg)               
-                            
-                # clean up memory
-                del X_batch, Y_batch         
-                num_batches += 1
-                epoch_cost += cost
-                mb_t += 1
-
-                # Print progress
-                print(f"\rEpoch {epoch+1}: {num_batches/estimated_batches*100:.1f}% complete", end='', flush=True)
-
-            epoch_cost  = epoch_cost / num_batches
+                # clean up memory after print_cost_every epochs
+                if epoch % print_cost_every == 0:
+                    gc.collect()        
+                    self.costs.append(epoch_cost)
+                    self.history_writer.add_cost(epoch_cost, epoch, mb_t)
+                    if self.print_cost:
+                        print(f"Epoch {epoch+1}/{self.num_epochs}, Cost: {epoch_cost:.4f}")       
+                
+                # add progress percentage
+                if epoch % (self.num_epochs // print_cost_every) == 0:
+                    progress = (epoch + 1) / self.num_epochs
+                    print(f"Progress: {progress*100:.1f}%")
+        finally:            
+            # close history writer
+            self.history_writer.close()
             
-            # clean up memory after print_cost_every epochs
-            if epoch % print_cost_every == 0:
-                gc.collect()        
-                self.costs.append(epoch_cost)
-                if self.print_cost:
-                    print(f"Epoch {epoch+1}/{self.num_epochs}, Cost: {epoch_cost:.4f}")       
-            
-            # add progress percentage
-            if epoch % (self.num_epochs // print_cost_every) == 0:
-                progress = (epoch + 1) / self.num_epochs
-                print(f"Progress: {progress*100:.1f}%")
-
         print(f"Training completed with total time of {time.time() - start_time} seconds!")
        
         self.evaluate_model_wrapper(parameters, last_activation)

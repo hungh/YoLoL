@@ -1,0 +1,3 @@
+default:
+  YOLOL_HOME: "C:/Users/hungd/git/YoLoL"
+  HISTORY_ENABLED: true

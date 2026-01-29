@@ -3,6 +3,7 @@ Batch Normalization Optimized Mini Batch Model
 """
 from .mini_batch.trainer import MiniBatchTrainer
 from ..classic_nn.data_utils import generate_binary_classification_data
+from src.learning_rate import LearningRateDecay
 
 
 def train_model():
@@ -64,4 +65,6 @@ def train_model():
     mini_batch_trainer.set_validation_data(X_dev, Y_dev)
     mini_batch_trainer.set_optimizer("momentum", beta=0.9)
     mini_batch_trainer.set_regularization(lambda_reg)
+    # mini_batch_trainer.set_learning_rate_decay(LearningRateDecay.get_decay_function("std"), initial_lr=learning_rate, decay_rate=1.0)
+    mini_batch_trainer.set_learning_rate_decay(LearningRateDecay.get_decay_function("step"))
     mini_batch_trainer.train()
