@@ -28,3 +28,8 @@ class TrainerWithAdam(MiniBatchTrainer):
         Update the iteration number of the mini-batch. This function is used for rare fine tuning of Adam hyperparameters
         """
         parameters[Adam.MB_T] = mb_t
+
+    def abstract_update_history(self, cost, parameters, grads, epoch, mb_t):
+        self.history_writer.add_cost(cost, epoch, mb_t)
+        self.history_writer.add_parameters(parameters, epoch, mb_t)
+        self.history_writer.add_gradients(grads, epoch, mb_t)

@@ -132,6 +132,9 @@ class MiniBatchTrainer:
     def abstract_update_mb_t(self, parameters, mb_t):
         pass
 
+    def abstract_update_history(self, cost, parameters, grads, epoch, mb_t):
+        pass
+
     def __str__(self):
         return f"MiniBatchTrainer(optimizer={self.optimizer_name}, learning_rate={self.learning_rate}, mini_batch_size={self.mini_batch_size}, num_epochs={self.num_epochs})"
         
@@ -182,7 +185,7 @@ class MiniBatchTrainer:
                     self.abstract_update_mb_t(parameters, mb_t)
                     
                     # the parameters will be updated in this function
-                    cost, _, _ = gradient_descent(X_batch, Y_batch, parameters, self.activations,
+                    cost, grads, _ = gradient_descent(X_batch, Y_batch, parameters, self.activations,
                     num_classes=self.num_classes,
                     learning_rate=dc_learning_rate, last_activation=last_activation, lambda_reg=self.lambda_reg)               
                                 
@@ -201,7 +204,7 @@ class MiniBatchTrainer:
                 if epoch % print_cost_every == 0:
                     gc.collect()        
                     self.costs.append(epoch_cost)
-                    self.history_writer.add_cost(epoch_cost, epoch, mb_t)
+                    self.abstract_update_history(cost, parameters, grads, epoch, mb_t)
                     if self.print_cost:
                         print(f"Epoch {epoch+1}/{self.num_epochs}, Cost: {epoch_cost:.4f}")       
                 

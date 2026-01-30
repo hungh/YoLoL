@@ -48,14 +48,14 @@ class TrainingHistoryReader:
         """Get parameter history"""
         df = self.get_history()
         if epoch:
-            return df[df['tag'].str.contains(f'epoch_{epoch}/parameters/')]
+            return df[df['step'] == epoch]
         return df[df['tag'].str.contains('/parameters/')]
     
     def get_gradients(self, epoch=None):
         """Get gradient history"""
         df = self.get_history()
         if epoch:
-            return df[df['tag'].str.contains(f'epoch_{epoch}/gradients/')]
+            return df[df['step'] == epoch]
         return df[df['tag'].str.contains('/gradients/')]
     
     def get_costs(self):
