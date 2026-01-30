@@ -116,7 +116,7 @@ pip install torch tbparse tensorboard
 
 You can monitor the training process in real-time using TensorBoard. Run the following command in the terminal:
 ```bash
-tensorboard --logdir=src/history/logs
+tensorboard --logdir=logs
 ```
 
 ### Post Training
