@@ -95,6 +95,76 @@ The model is a deep neural network with the following architecture:
    # python -m src.classic_train multi_label_adam
    ```
 
+## DEBUGGING & MONITORING
+
+### Training History Tracking
+
+This repository includes comprehensive training history tracking using TensorBoard. The system automatically logs:
+
+- **Parameters**: Weight and bias evolution
+- **Gradients**: Gradient norms and distributions  
+- **Costs**: Training and validation losses
+- **Metrics**: Custom performance metrics
+
+### Prerequisites
+
+Install the required dependencies:
+```bash
+pip install torch tbparse tensorboard
+```
+### During Training
+
+You can monitor the training process in real-time using TensorBoard. Run the following command in the terminal:
+```bash
+tensorboard --logdir=src/history/logs
+```
+
+### Post Training
+
+You can find the history writer in the src/history directory.
+To extract the history, you can use the following code:
+
+1. Start Jupyter Notebook from repository root
+```bash
+jupyter lab
+```
+2. Load the history reader in a notebook cell:
+
+```python
+%run src/history/history_reader_script.py
+```
+3. Explore the data:
+
+```python
+# View all training records
+df.head()
+
+# Get gradient norms for a specific epoch
+gradients_epoch_2100 = reader.get_gradients(epoch=2100)
+
+# Filter specific batch gradients
+batch_3_gradients = df[
+    (df['step'] == 2100) & 
+    (df['tag'].str.startswith('/batch_no_3/gradients/'))
+]
+
+# Analyze parameter evolution
+w1_params = reader.get_parameters()
+w1_params[w1_params['tag'].str.contains('/W1')]
+```
+4. Common Queries:
+
+```python
+# Check for gradient explosions
+max_grad_norms = df[df['tag'].str.contains('_norm')].groupby('step')['value'].max()
+
+# Compare training vs validation costs
+costs = reader.get_costs()
+epoch_costs = costs.groupby('step')['value'].mean()
+
+# Monitor specific layer gradients
+layer_gradients = df[df['tag'].str.contains('/gradients/dW3')]
+```
 ## Package Structure
 
 ```
