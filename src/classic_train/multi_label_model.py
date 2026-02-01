@@ -4,8 +4,12 @@ Batch Normalization Optimized Mini Batch Model
 
 from src.classic_nn.data_utils import generate_multilabel_dataset
 from .mini_batch.trainer import MiniBatchTrainer
+from dependency_injector.wiring import Provide, inject
+from ..di.containers import Container    
+from ..history import TrainingHistoryWriter
 
-def train_model():
+@inject
+def train_model(history_writer: TrainingHistoryWriter = Provide[Container.history_writer]):
     """
     Train a multi-label classification model using mini-batch gradient descent.
     
@@ -40,7 +44,8 @@ def train_model():
         num_classes=num_classes,
         mini_batch_size=mini_batch_size,
         num_epochs=num_epochs,
-        print_cost=print_cost
+        print_cost=print_cost,
+        history_writer=history_writer
     )
     # last layer is linear for multi-label classification
     mini_batch_trainer.enable_logits()

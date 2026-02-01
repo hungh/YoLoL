@@ -15,12 +15,9 @@ from src.history import TrainingHistoryWriter
 from .metrics import multi_label_metrics
 from .utils import mini_batch_generator as mb_gen   
 
-
-
-
 class MiniBatchTrainer:
     def __init__(self, X_train, Y_train, layers_dims, learning_rate=0.001, activations=None, num_classes=1,
-     mini_batch_size=64, num_epochs=1000, print_cost=True, plot_input_data=False):
+     mini_batch_size=64, num_epochs=1000, print_cost=True, plot_input_data=False, history_writer:TrainingHistoryWriter=None):
         self.X_train = X_train
         self.Y_train = Y_train
         self.X_val = None
@@ -41,7 +38,7 @@ class MiniBatchTrainer:
         self.plot_input_data = plot_input_data
         self.decay_function = None
         self.decay_function_kwargs = {}
-        self.history_writer = TrainingHistoryWriter()
+        self.history_writer = history_writer
 
     def set_optimizer(self, optimizer_name, **kwargs):
         self.optimizer_name = optimizer_name
@@ -144,7 +141,7 @@ class MiniBatchTrainer:
         """
         # print input shape
         print(f"Input shape: {self.X_train.shape}")
-        print(f"Output shape: {self.Y_train.shape}")
+        print(f"Output shape: {self.Y_train.shape}")        
 
         # validate minimum hyperparameters
         self.validate_hyperparameters()

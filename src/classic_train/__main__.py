@@ -4,6 +4,11 @@ from . import batch_norm_model
 from . import binary_model_adam
 from . import multi_label_model_adam
 
+from ..di.containers import Container
+
+container = Container()
+container.wire(modules=[binary_model, batch_norm_model, binary_model_adam, multi_label_model, multi_label_model_adam])
+
 MODEL_DICT = {
     "binary": binary_model,
     "multi_label": multi_label_model,

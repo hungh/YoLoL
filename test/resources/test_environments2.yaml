@@ -2,5 +2,5 @@ default:
   YOLOL_HOME: "C:/Users/hungd/git/YoLoL"
   LOG_DIR: "logs"
   HISTORY_ENABLED: true
-  DROP_OUT_ENABLED: false
-  GRADIENT_CHECKING_ENABLED: false
+  DROP_OUT_ENABLED: true
+  GRADIENT_CHECKING_ENABLED: true

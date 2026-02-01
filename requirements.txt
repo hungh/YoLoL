@@ -5,3 +5,4 @@ opencv-python>=4.8.0
 PyYAML>=6.0.0
 pytorch>=2.9.1
 tbparse
+dependency-injector

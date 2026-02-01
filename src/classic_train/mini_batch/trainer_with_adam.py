@@ -1,11 +1,12 @@
 # a subclass of MiniBatchTrainer that uses Adam optimizer
 from .trainer import MiniBatchTrainer
 from src.classic_nn.optimizers.adam import Adam
+from src.history import TrainingHistoryWriter
 
 class TrainerWithAdam(MiniBatchTrainer):
     def __init__(self, X_train, Y_train, layers_dims, learning_rate=0.001, activations=None, num_classes=1,
-     mini_batch_size=64, num_epochs=1000, print_cost=True, plot_input_data=False):
-        super().__init__(X_train, Y_train, layers_dims, learning_rate, activations, num_classes, mini_batch_size, num_epochs, print_cost, plot_input_data)
+     mini_batch_size=64, num_epochs=1000, print_cost=True, plot_input_data=False, history_writer:TrainingHistoryWriter=None):
+        super().__init__(X_train, Y_train, layers_dims, learning_rate, activations, num_classes, mini_batch_size, num_epochs, print_cost, plot_input_data, history_writer)
         self.optimizer_name = "adam"      
         self.optimizer_kwargs = None
         

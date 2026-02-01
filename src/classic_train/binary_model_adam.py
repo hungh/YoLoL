@@ -3,9 +3,12 @@ Binary model training using Adam optimizer
 """
 from .mini_batch.trainer_with_adam import TrainerWithAdam
 from ..classic_nn.data_utils import generate_binary_classification_data
+from dependency_injector.wiring import Provide, inject
+from ..di.containers import Container    
+from ..history import TrainingHistoryWriter
 
-
-def train_model():
+@inject
+def train_model(history_writer: TrainingHistoryWriter = Provide[Container.history_writer]):
     """
     Train a binary classification model using mini-batch gradient descent.
     
@@ -59,6 +62,7 @@ def train_model():
         num_epochs=num_epochs,
         print_cost=print_cost,
         plot_input_data=True,
+        history_writer=history_writer
     )
 
     adam_mbatch_trainer.set_validation_data(X_dev, Y_dev)    
