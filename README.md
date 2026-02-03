@@ -98,7 +98,7 @@ The model is a deep neural network with the following architecture:
 4. Run the training script:
   ResNet50
    ```bash
-   python -m src.tf_train.resnet.ResNet50_trainer
+   python -m src.tf_train.resnet resnet50
    ```
   to enable GPU training on Apple Silicon, tetnsorflow-macos and tensorflow-metal are required
    ```bash
@@ -308,3 +308,12 @@ This modular structure allows for easy experimentation with different architectu
 ### Training Data
 - **This Model**: Requires pre-processed crops
 - **YOLO**: Works with raw images and annotations
+
+### Training Results
+- **ResNet50**: A deep residual network for image classification (using my own implementation)
+with 10 epochs and batch size of 32
+```bash
+
+``` 
+Traing performance:
+![Alt text](images/resnet50_training_performance.png)

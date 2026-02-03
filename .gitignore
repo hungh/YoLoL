@@ -1,5 +1,6 @@
 # Data files
 assets/produce_dataset/
+assets/sign_mnist/
 *.npy
 *.npz
 *.h5

@@ -2,8 +2,8 @@ from matplotlib.pyplot import imshow
 from tensorflow.keras.preprocessing import image
 import numpy as np
 
-def predict_with_image(img_path, pre_trained_model):
-    img = image.load_img(img_path, target_size=(64, 64))
+def predict_with_image(img_path, pre_trained_model, input_shape=(64, 64)):
+    img = image.load_img(img_path, target_size=input_shape)
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
     x = x/255.0
