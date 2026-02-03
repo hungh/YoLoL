@@ -1,6 +1,7 @@
 # Data files
 assets/produce_dataset/
-assets/sign_mnist/
+assets/mnist/
+assets/
 *.npy
 *.npz
 *.h5
@@ -74,3 +75,24 @@ htmlcov/
 logs/
 .data
 data/
+
+# TensorFlow/Keras
+*.keras
+checkpoints/
+
+# Training outputs
+*.out
+tensorboard_logs/
+wandb/
+
+# Large datasets
+*.csv
+*.json
+*.parquet
+*.feather
+
+# Model files
+*.h5
+*.pkl
+*.bin
+*.dat

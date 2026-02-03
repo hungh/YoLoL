@@ -313,7 +313,27 @@ This modular structure allows for easy experimentation with different architectu
 - **ResNet50**: A deep residual network for image classification (using my own implementation)
 with 10 epochs and batch size of 32
 ```bash
-
+Epoch 1/10
+858/858 ━━━━━━━━━━━━━━━━━━━━ 167s 181ms/step - accuracy: 0.5824 - loss: 1.4964 - val_accuracy: 0.6880 - val_loss: 1.0371
+Epoch 2/10
+858/858 ━━━━━━━━━━━━━━━━━━━━ 152s 178ms/step - accuracy: 0.9368 - loss: 0.2052 - val_accuracy: 0.7888 - val_loss: 0.7929
+Epoch 3/10
+858/858 ━━━━━━━━━━━━━━━━━━━━ 155s 180ms/step - accuracy: 0.9755 - loss: 0.0803 - val_accuracy: 0.8339 - val_loss: 0.7679
+Epoch 4/10
+858/858 ━━━━━━━━━━━━━━━━━━━━ 156s 182ms/step - accuracy: 0.9700 - loss: 0.1053 - val_accuracy: 0.8607 - val_loss: 0.5706
+Epoch 5/10
+858/858 ━━━━━━━━━━━━━━━━━━━━ 149s 174ms/step - accuracy: 0.9827 - loss: 0.0622 - val_accuracy: 0.8454 - val_loss: 0.7376
+Epoch 6/10
+858/858 ━━━━━━━━━━━━━━━━━━━━ 151s 176ms/step - accuracy: 0.9849 - loss: 0.0552 - val_accuracy: 0.8622 - val_loss: 0.7072
+Epoch 7/10
+858/858 ━━━━━━━━━━━━━━━━━━━━ 157s 183ms/step - accuracy: 0.9886 - loss: 0.0390 - val_accuracy: 0.8914 - val_loss: 0.5103
+Epoch 8/10
+858/858 ━━━━━━━━━━━━━━━━━━━━ 155s 180ms/step - accuracy: 0.9792 - loss: 0.0814 - val_accuracy: 0.8724 - val_loss: 0.5149
+Epoch 9/10
+858/858 ━━━━━━━━━━━━━━━━━━━━ 157s 182ms/step - accuracy: 0.9869 - loss: 0.0582 - val_accuracy: 0.8878 - val_loss: 0.4476
+Epoch 10/10
+858/858 ━━━━━━━━━━━━━━━━━━━━ 158s 184ms/step - accuracy: 0.9940 - loss: 0.0245 - val_accuracy: 0.9444 - val_loss: 0.2801
+225/225 ━━━━━━━━━━━━━━━━━━━━ 7s 31ms/step - accuracy: 0.9444 - loss: 0.2801
 ``` 
 Traing performance:
 ![Alt text](images/resnet50_training_performance.png)
