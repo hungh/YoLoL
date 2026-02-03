@@ -16,6 +16,7 @@ def test_load_environments():
     assert env_config.get_history_enabled() == True
     assert env_config.get_drop_out_enabled() == True    
     assert env_config.get_gradient_checking_enabled() == False
+    assert env_config.get_saved_model_dir() == Path("saved_model")
 
 def test_gradient_checking_conflict():
     config_path = get_resource_file("test_environments2.yaml")
@@ -25,3 +26,8 @@ def test_gradient_checking_conflict():
     # This should raise ValueError
     with pytest.raises(ValueError, match="Dropout can not be used with gradient checking. Turn off dropout or gradient checking"):
         env_config.get_gradient_checking_enabled()
+
+def test_sign_path():
+    config_path = get_resource_file("test_environments.yaml")
+    env_config = EnvironmentConfig(config_path.relative_to(Path.cwd()))
+    assert env_config.get_sign_path() == Path("assets/mnist/signs")

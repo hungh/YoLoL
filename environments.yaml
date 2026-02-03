@@ -1,6 +1,10 @@
+# if a non-default environment is specified, the environment_name.key is used instead of key
 default:
   YOLOL_HOME: "C:/Users/hungd/git/YoLoL"
   LOG_DIR: "logs"
   HISTORY_ENABLED: true
   DROP_OUT_ENABLED: false
   GRADIENT_CHECKING_ENABLED: false
+  SAVED_MODEL_DIR: "saved_model"
+mnst:
+  SIGN_PATH: "assets/mnist/signs"

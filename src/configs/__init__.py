@@ -27,6 +27,12 @@ class EnvironmentConfig:
         print(f"Log dir: {self.log_dir}")
         return self.log_dir
 
+    def get_sign_path(self) -> Path:
+        return Path(os.environ.get('mnst.SIGN_PATH', Path.cwd() / "assets/mnist/signs"))
+    
+    def get_saved_model_dir(self) -> Path:
+        return Path(os.environ.get('SAVED_MODEL_DIR', Path.cwd() / "saved_model"))
+
     def get_gradient_checking_enabled(self) -> bool:
         gradient_checking_enabled = self.gradient_checking_enabled
         if self.gradient_checking_enabled and self.drop_out_enabled:
@@ -50,9 +56,10 @@ class EnvironmentConfig:
                     if "default" in environments:
                         for key, value in environments["default"].items():
                             os.environ[key] = str(value)
-                    else:
-                        # Handle flat structure
-                        for key, value in environments.items():
-                            os.environ[key] = str(value)
+                    # load environment with prefix
+                    for env_name, env_values in environments.items():
+                        if env_name != "default":
+                            for key, value in env_values.items():
+                                os.environ[f'{env_name}.{key}'] = str(value)
         except (FileNotFoundError, yaml.YAMLError, Exception) as e:
             print(f"Warning: Could not load {self.config_file_path}: {e}")

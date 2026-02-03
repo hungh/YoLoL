@@ -94,6 +94,16 @@ The model is a deep neural network with the following architecture:
    # python -m src.classic_train binary_adam
    # python -m src.classic_train multi_label_adam
    ```
+   
+4. Run the training script:
+  ResNet50
+   ```bash
+   python -m src.tf_train.resnet.ResNet50_trainer
+   ```
+  to enable GPU training on Apple Silicon, tetnsorflow-macos and tensorflow-metal are required
+   ```bash
+   pip install tensorflow-macos tensorflow-metal
+   ```
 
 ## DEBUGGING & MONITORING
 
