@@ -12,7 +12,7 @@ from src.configs import EnvironmentConfig
 from .predict import predict_with_image
 
 
-def train_model(force_train: bool = False):
+def train_model(force_train: bool = False, epochs: int = 10):
     """
     Train ResNet50 model on SignMNIST dataset
     Args:
@@ -28,6 +28,7 @@ def train_model(force_train: bool = False):
         (X_train_orig, Y_train_orig), (X_test_orig, Y_test_orig), classes = prepare_sign_mnist_data(train_path=f'{sign_path}/sign_mnist_train.csv', test_path=f'{sign_path}/sign_mnist_test.csv', dataset_dir=sign_path)    
         
         num_of_classes = len(np.unique(Y_train_orig)) + 1
+        # using only 1 channel for grayscale images
         model = ResNet50(input_shape = (28 , 28, 1), classes = num_of_classes, training=True)
         opt = tf.keras.optimizers.Adam(learning_rate=0.00015)
         model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
@@ -62,7 +63,7 @@ def train_model(force_train: bool = False):
             tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True), # stop training when validation loss stops improving
             tf.keras.callbacks.ModelCheckpoint(env_config.get_saved_model_dir() / 'resnet50_checkpoints.keras', monitor='val_loss', save_best_only=True) # save best model
         ]
-        model.fit(X_train_orig, Y_train, validation_data=(X_test_orig, Y_test), epochs=10, batch_size=32, callbacks=callbacks)
+        model.fit(X_train_orig, Y_train, validation_data=(X_test_orig, Y_test), epochs=epochs, batch_size=32, callbacks=callbacks)
         model.save(env_config.get_saved_model_dir() / 'resnet50.keras')
 
         # validate model on test set

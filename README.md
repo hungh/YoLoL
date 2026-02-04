@@ -175,6 +175,32 @@ epoch_costs = costs.groupby('step')['value'].mean()
 # Monitor specific layer gradients
 layer_gradients = df[df['tag'].str.contains('/gradients/dW3')]
 ```
+
+## Data assets structure
+```
+assets/ 
+├── mnist/ 
+│ └── signs/ # Sign Language MNIST dataset 
+│ ├── sign_mnist_train.csv # Training data (27,455 samples) 
+│ ├── sign_mnist_test.csv # Test data (7,172 samples)
+├── produce_dataset/ # Custom generated datasets 
+│ ├── *.npy # NumPy data files
+│ ├── *.npz # Compressed NumPy arrays 
+│ └── *.csv # CSV data files 
+└── images/ # Training results and visualizations 
+└── saved_model_dir/ # Saved model directory
+└── history/ # Training history directory
+└── logs/ # TensorBoard logs
+```
+
+### Dataset Details
+
+- **SignMNIST**: American Sign Language letters (A-Z, 26 classes)
+- **Image Size**: 28x28 grayscale images
+- **Training Samples**: 27,455 images
+- **Test Samples**: 7,172 images
+- **Format**: CSV with pixel values (0-255) and labels (0-25)
+
 ## Package Structure
 
 ```
@@ -335,5 +361,4 @@ Epoch 10/10
 858/858 ━━━━━━━━━━━━━━━━━━━━ 158s 184ms/step - accuracy: 0.9940 - loss: 0.0245 - val_accuracy: 0.9444 - val_loss: 0.2801
 225/225 ━━━━━━━━━━━━━━━━━━━━ 7s 31ms/step - accuracy: 0.9444 - loss: 0.2801
 ``` 
-Traing performance:
 ![Alt text](images/resnet50_training_performance.png)

@@ -5,7 +5,10 @@ import h5py
 import math
 
 from keras.layers import Layer
+from keras.saving import register_keras_serializable
 
+# NOTE: tensorflow also has BatchNormalization. See https://www.tensorflow.org/api_docs/python/tf/keras/layers/BatchNormalization
+@register_keras_serializable(package='ResNet')
 class BatchNormalization(Layer):
     # Code from: https://github.com/dksakkos/BatchNorm
     def __init__(self, 
