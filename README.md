@@ -336,7 +336,7 @@ This modular structure allows for easy experimentation with different architectu
 - **YOLO**: Works with raw images and annotations
 
 ### Training Results
-- **ResNet50**: A deep residual network for image classification (using my own implementation)
+- **ResNet50**: A deep residual network for image classification (using a tensorflow implementation with a custom BatchNormalization layer)
 with 10 epochs and batch size of 32
 ```bash
 Epoch 1/10
