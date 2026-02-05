@@ -105,6 +105,8 @@ The model is a deep neural network with the following architecture:
    pip install tensorflow-macos tensorflow-metal
    ```
 
+NOTE: For GPU training on WSL, follow the instructions in [tensorflow_cuda_wsl.md](docs/tensorflow_cuda_wsl.md)
+
 ## DEBUGGING & MONITORING
 
 ### Training History Tracking
