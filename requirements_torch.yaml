@@ -1,0 +1,16 @@
+name: torch12
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - matplotlib
+  - pyyaml>=6.0.0
+  - opencv
+  - pip:
+      - kagglehub>=0.3.13
+      - dependency-injector
+      - pandas
+      - seaborn
+      - scikit-learn

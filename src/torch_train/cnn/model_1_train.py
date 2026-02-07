@@ -13,10 +13,11 @@ class SAM_Model_1(CNN_Model_Trainer):
         "plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"
     ]
     
-    def __init__(self, save_path):
+    def __init__(self, save_path, epochs=10):
         super().__init__(save_path)
+        self.epochs = epochs
     
-    def load_data(self):
+    def load_data(self, only_test=False):
         transform = transforms.Compose(
             [transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
@@ -43,7 +44,7 @@ class SAM_Model_1(CNN_Model_Trainer):
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(cnn_model.parameters(), lr=0.001, momentum=0.9)
 
-        for epoch in range(2):  # loop over the dataset multiple times
+        for epoch in range(self.epochs):  # loop over the dataset multiple times
 
             running_loss = 0.0
             for i, data in enumerate(self.trainloader, 0):

@@ -12,7 +12,7 @@ class CNN_Model_Trainer:
         self.is_gpu_train = is_gpu_train
         self.device = torch.device("cuda:0" if torch.cuda.is_available() and self.is_gpu_train else "cpu")
 
-    def load_data(self):
+    def load_data(self, only_test=False):
         """
         Load the data and set the trainloader, testloader, and classes.      
         """
@@ -35,7 +35,7 @@ class CNN_Model_Trainer:
         
         # load the test data
         if self.testloader is None:
-            self.load_data()
+            self.load_data(only_test=True)
     
         # print test images
         images, labels = show_images_in_grid(self.testloader, self.classes, batch_size = 4)
