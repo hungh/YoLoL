@@ -31,7 +31,7 @@ class EnvironmentConfig:
         return Path(os.environ.get('mnst.SIGN_PATH', Path.cwd() / "assets/mnist/signs"))
     
     def get_saved_model_dir(self) -> Path:
-        return Path(os.environ.get('SAVED_MODEL_DIR', Path.cwd() / "saved_model"))
+        return Path(os.environ.get('SAVED_MODEL_DIR', Path.cwd() / "saved_models"))
 
     def get_gradient_checking_enabled(self) -> bool:
         gradient_checking_enabled = self.gradient_checking_enabled

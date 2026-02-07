@@ -4,6 +4,6 @@ default:
   DROP_OUT_ENABLED: true
   GRADIENT_CHECKING_ENABLED: false
   LOG_DIR: "logs"
-  SAVED_MODEL_DIR: "saved_model"
+  SAVED_MODEL_DIR: "saved_models"
 mnst:
   SIGN_PATH: "assets/mnist/signs"

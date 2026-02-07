@@ -5,6 +5,6 @@ default:
   HISTORY_ENABLED: true
   DROP_OUT_ENABLED: false
   GRADIENT_CHECKING_ENABLED: false
-  SAVED_MODEL_DIR: "saved_model"
+  SAVED_MODEL_DIR: "saved_models"
 mnst:
   SIGN_PATH: "assets/mnist/signs"

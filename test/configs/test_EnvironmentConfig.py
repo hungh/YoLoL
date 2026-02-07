@@ -16,7 +16,7 @@ def test_load_environments():
     assert env_config.get_history_enabled() == True
     assert env_config.get_drop_out_enabled() == True    
     assert env_config.get_gradient_checking_enabled() == False
-    assert env_config.get_saved_model_dir() == Path("saved_model")
+    assert env_config.get_saved_model_dir() == Path("saved_models")
 
 def test_gradient_checking_conflict():
     config_path = get_resource_file("test_environments2.yaml")

@@ -1,7 +1,5 @@
 import os
-import pytest
 import tempfile
-import shutil
 import numpy as np
 from src.tf_train.mnist_signs_loader import prepare_sign_mnist_data
 

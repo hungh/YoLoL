@@ -1,0 +1,8 @@
+kagglehub>=0.3.13
+numpy
+matplotlib
+opencv-python==4.9.0.80
+PyYAML>=6.0.0
+tbparse
+dependency-injector
+scikit-learn
