@@ -1,13 +1,17 @@
+import os
+
 import torch
-import torchvision.transforms as transforms
 import torch.nn as nn
 import torch.optim as optim
+import torchvision.transforms as transforms
+import torchvision.models as models
+from torch.utils.data import DataLoader
 from PIL import Image
-import os
+
 from .. base_trainer import CNN_Model_Trainer
 from src.configs import EnvironmentConfig
 from ...dataset.ASLDataSet import ASLDataSet
-from torch.utils.data import DataLoader
+
 
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
@@ -28,6 +32,8 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
         self.epochs = epochs
         self.classes = 24
         self.learning_rate = 0.0001   
+        self.batch_size = 16
+        self.resize_shape = (224, 224)
        
     
     def load_data(self, only_test=False):
@@ -36,12 +42,10 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
         train_path = os.path.join(dataset_dir, 'sign_mnist_train.csv')
         test_path = os.path.join(dataset_dir, 'sign_mnist_test.csv')
 
+        print("Loading data...")
         if not only_test:
             train_transform = transforms.Compose([
-                transforms.Resize((224, 224)),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomRotation(15),                
-                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+                transforms.Resize(self.resize_shape),                
                 transforms.Grayscale(num_output_channels=3), # to RGB channel data
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -50,34 +54,38 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
             train_dataset = ASLDataSet(train_path, transform=train_transform)
             # get the number of classes from the dataset
             assert train_dataset.num_classes == self.classes, f"Number of classes in the dataset is {train_dataset.num_classes}, expected {self.classes}"
-            train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=2)
+            train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=0)
             self.trainloader = train_loader
             print(f"Training data size: {len(train_dataset)}")
 
         test_transform = transforms.Compose([
-            transforms.Resize((224, 224)),
+            transforms.Resize(self.resize_shape),
             transforms.Grayscale(num_output_channels=3), # to RGB channel data
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
 
         test_dataset  = ASLDataSet(test_path, transform=test_transform)
-        test_loader  = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=2)
+        test_loader  = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=0)
         self.testloader = test_loader
 
         print(f"Test data size: {len(test_dataset)}")
 
     
     def get_base_model(self):
-        # Load pretrained MobileNetV2
-        base_model = torch.hub.load('pytorch/vision:v0.10.0', 'mobilenet_v2', pretrained=True)
-    
-        # Replace the final classifier layer
-        base_model.classifier = nn.Sequential(
-            nn.Dropout(0.2),
-            nn.Linear(1280, self.classes)  # MobileNetV2 has 1280 in_features
-        )
+        try:
+            # Load pretrained MobileNetV2
+            base_model = models.mobilenet_v2(pretrained=True)
+            # torch.hub.load('pytorch/vision:v0.10.0', 'mobilenet_v2', pretrained=True)
         
+            # Replace the final classifier layer
+            base_model.classifier = nn.Sequential(
+                nn.Dropout(0.2),
+                nn.Linear(1280, self.classes)  # MobileNetV2 has 1280 in_features
+            )
+        except Exception as e:
+            print(f"Error loading MobileNetV2: {e}")
+            raise
         return base_model
 
     def train_model(self):
@@ -97,8 +105,8 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
         else:
             self.load_data()
             print(f"Starting training model: {self}")
-            based_model = self.get_base_model()
-            self.cnn_model = based_model.to(self.device)
+            base_model = self.get_base_model()
+            self.cnn_model = base_model.to(self.device)
 
             # Freeze all convolutional layers (features)
             for param in self.cnn_model.features.parameters():
@@ -170,12 +178,6 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
         accuracy = (all_preds == all_labels).float().mean()
         print(f'Accuracy: {accuracy:.4f}')
 
-        cm = confusion_matrix(all_labels, all_preds)
-
-        sns.heatmap(cm, annot=True, fmt="d")
-        plt.show()
-   
-
     def predict(self, image_path):
         input_image = Image.open(image_path)
         # show image
@@ -185,7 +187,7 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
 
         preprocess = transforms.Compose([
             transforms.Resize(256),
-            transforms.CenterCrop(224),
+            transforms.CenterCrop(self.resize_shape[0]),
             transforms.Grayscale(num_output_channels=3),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
