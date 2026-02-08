@@ -11,6 +11,7 @@ class ASLDataSet(Dataset):
 
         # First column is label
         self.labels = self.data.iloc[:, 0].values.astype(np.int64)
+        self.__num_classes = len(np.unique(self.data.iloc[:, 0]))
 
         # Remaining columns are pixels
         self.images = self.data.iloc[:, 1:].values.astype(np.float32).reshape(-1, 28, 28)
@@ -29,3 +30,7 @@ class ASLDataSet(Dataset):
             img = self.transform(img)
 
         return img, label
+        
+    @property
+    def num_classes(self):
+        return self.__num_classes

@@ -17,7 +17,7 @@ from pathlib import Path
 
 # this class loads a pre-trained MobileNetV2 model and fine-tunes it for a new task, sign language recognition
 class MobileNetV2_Trainer(CNN_Model_Trainer):
-    def __init__(self, save_path, epochs=35):
+    def __init__(self, save_path, epochs=20):
         """
         Args:
             save_path (str): path to save the model
@@ -26,11 +26,8 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
         super().__init__(save_path)
         self.env_config = EnvironmentConfig()
         self.epochs = epochs
-        self.classes = 26 # hard coded for now
-        self.learning_rate = 0.0001        
-
-    def grayscale_to_rgb(self, image):
-        return image.convert('RGB')
+        self.classes = 24 # hard coded for now
+        self.learning_rate = 0.0017        
        
     
     def load_data(self, only_test=False):
@@ -43,7 +40,7 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
             train_transform = transforms.Compose([
                 transforms.Resize((224, 224)),
                 transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomRotation(10),
+                transforms.RandomRotation(15),                
                 transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
                 transforms.Grayscale(num_output_channels=3), # to RGB channel data
                 transforms.ToTensor(),
@@ -51,6 +48,8 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
             ])
 
             train_dataset = ASLDataSet(train_path, transform=train_transform)
+            # get the number of classes from the dataset
+            assert train_dataset.num_classes == self.classes, f"Number of classes in the dataset is {train_dataset.num_classes}, expected {self.classes}"
             train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=2)
             self.trainloader = train_loader
             print(f"Training data size: {len(train_dataset)}")
@@ -71,15 +70,15 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
     
     def get_base_model(self):
         # Load pretrained MobileNetV2
-        based_model = torch.hub.load('pytorch/vision:v0.10.0', 'mobilenet_v2', pretrained=True)
+        base_model = torch.hub.load('pytorch/vision:v0.10.0', 'mobilenet_v2', pretrained=True)
     
         # Replace the final classifier layer
-        based_model.classifier = nn.Sequential(
+        base_model.classifier = nn.Sequential(
             nn.Dropout(0.2),
             nn.Linear(1280, self.classes)  # MobileNetV2 has 1280 in_features
         )
         
-        return based_model
+        return base_model
 
     def train_model(self):
 
@@ -97,7 +96,7 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
             self.cnn_model.eval() # set model to evaluation mode (inference mode)
         else:
             self.load_data()
-            print(f"Starting training model...")
+            print(f"Starting training model: {self}")
             based_model = self.get_base_model()
             self.cnn_model = based_model.to(self.device)
 
@@ -105,8 +104,8 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
             for param in self.cnn_model.features.parameters():
                 param.requires_grad = False
             
-            # Unfreeze the last 4 layers
-            for param in self.cnn_model.features[-4:].parameters():
+            # Unfreeze the classifier FC layers
+            for param in self.cnn_model.classifier.parameters():
                 param.requires_grad = True
 
             # Define loss function and optimizer
@@ -114,7 +113,7 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
             
             # Only optimize the trainable parameters (classifier)
             optimizer = optim.Adam(self.cnn_model.classifier.parameters(), lr=self.learning_rate)
-
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
             # Training loop
             self.cnn_model.train()
             for epoch in range(self.epochs):
@@ -126,10 +125,11 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
                     outputs = self.cnn_model(inputs)
                     loss = criterion(outputs, labels)
                     loss.backward()
-                    optimizer.step()
+                    optimizer.step()                    
                     
                     running_loss += loss.item()
-                
+
+                scheduler.step()
                 print(f'Epoch {epoch+1}/{self.epochs}, Loss: {running_loss/len(self.trainloader):.4f}')
             
             # Save model
@@ -207,5 +207,7 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
         print(f"Confidence: {confidence:.4f}")
         print(f"Probabilities: {probabilities}")
 
+    def __str__(self):
+        return f"MobileNetV2_Trainer(epochs={self.epochs}, classes={self.classes}, learning_rate={self.learning_rate})"
         
         
