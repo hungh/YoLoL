@@ -21,13 +21,13 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
         """
         Args:
             save_path (str): path to save the model
-            epochs (int, optional): number of epochs to train. Defaults to 10.
+            epochs (int, optional): number of epochs to train. Defaults to 20.
         """
         super().__init__(save_path)
         self.env_config = EnvironmentConfig()
         self.epochs = epochs
-        self.classes = 24 # hard coded for now
-        self.learning_rate = 0.0017        
+        self.classes = 24
+        self.learning_rate = 0.0001   
        
     
     def load_data(self, only_test=False):
@@ -113,7 +113,7 @@ class MobileNetV2_Trainer(CNN_Model_Trainer):
             
             # Only optimize the trainable parameters (classifier)
             optimizer = optim.Adam(self.cnn_model.classifier.parameters(), lr=self.learning_rate)
-            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.epochs)
             # Training loop
             self.cnn_model.train()
             for epoch in range(self.epochs):
