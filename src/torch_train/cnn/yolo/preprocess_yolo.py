@@ -1,6 +1,9 @@
 """
-Using a deep convolutional neural network wit reduction factor of 32 to take a preprocessed image (680, 680, 3) as input and create
+Will do: Using a deep convolutional neural network wit reduction factor of 32 to take a preprocessed image (680, 680, 3) as input and create
 an encoding of (19, 19, 5, 85) as output for YOLO model.
+
+What is being built is a smaller version, with 63 classes instead of 80 classes, and 19x19 grid.
+
 """
 from src.torch_train.cnn.base_trainer import CNN_Model_Trainer
 from src.torch_train.dataset import YoLoDataSet

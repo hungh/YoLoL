@@ -84,6 +84,43 @@ def iou(box1, box2):
     
     return iou
 
+
+def yolo_filter_boxes(boxes, box_confidence, box_class_probs, threshold = .6):
+    """Filters YOLO boxes by thresholding on object and class confidence.
+    
+    Arguments:
+        boxes -- tensor of shape (19, 19, 3, 4)
+        box_confidence -- tensor of shape (19, 19, 3, 1)
+        box_class_probs -- tensor of shape (19, 19, 3, 63)
+        threshold -- real value, if [ highest class probability score < threshold],
+                     then get rid of the corresponding box
+
+    Returns:
+        scores -- tensor of shape (None,), containing the class probability score for selected boxes
+        boxes -- tensor of shape (None, 4), containing (b_x, b_y, b_h, b_w) coordinates of selected boxes
+        classes -- tensor of shape (None,), containing the index of the class detected by the selected boxes
+
+    Note: "None" is here because you don't know the exact number of selected boxes, as it depends on the threshold. 
+    For example, the actual output size of scores would be (10,) if there are 10 boxes.
+    """
+    box_scores = box_confidence * box_class_probs # (19, 19, 3, 63)
+
+    # set dim to -1 to get the index of the max value in the last dimension
+    box_classes = torch.argmax(box_scores, dim=-1) # (19, 19, 3) where data is index of class with max prob
+    box_class_scores = torch.max(box_scores, dim=-1)[0] # (19, 19, 3) where data is the score of a class with prob
+    
+    # Create a filtering mask based on "box_class_scores" by using "threshold". The mask should have the
+    # same dimension as box_class_scores, and be True for the boxes you want to keep (with probability >= threshold)
+    filtering_mask = box_class_scores >= threshold # (19, 19, 3) where data is Bool
+    
+    # Apply the mask to box_class_scores, boxes and box_classes
+    scores = box_class_scores[filtering_mask] #  for example (1454, ) selected boxes with prob, prob>=threshold
+    boxes = boxes[filtering_mask] ## like (1454, 4)
+    classes = box_classes[filtering_mask] # something like (1454, )
+    
+    return scores, boxes, classes
+
+
 def yolo_non_max_suppression(scores, boxes, classes, max_boxes = 10, iou_threshold = 0.5):
     """
     Applies Non-max suppression (NMS) to set of boxes
