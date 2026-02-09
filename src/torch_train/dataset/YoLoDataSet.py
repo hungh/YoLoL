@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset
-import glob
+from glob import glob
 import os
 import cv2
 import numpy as np
@@ -13,7 +13,7 @@ ANCHOR_BOXES = [
     ]
 
 class YoLoDataSet(Dataset):
-    def __init__(self, image_dir=None, annotation_dir=None, grid_size=19, num_anchors=3, num_classes=68, transform=None):
+    def __init__(self, image_dir=None, annotation_dir=None, grid_size=19, num_anchors=3, num_classes=63, transform=None):
         self.image_dir = image_dir
         self.annotation_dir = annotation_dir
         self.grid_size = grid_size
@@ -22,9 +22,13 @@ class YoLoDataSet(Dataset):
         self.transform = transform
 
         if self.image_dir is not None:
+            # print(f"Looking for images in: {self.image_dir}")
             self.image_files = glob(os.path.join(self.image_dir, "*.jpg")) + glob(os.path.join(self.image_dir, "*.png"))
+            # print(f"Found {len(self.image_files)} image files")
+            # print(f"Image files: {self.image_files[:5]}...")  # Show first 5 files
         else:
             self.image_files = []
+            print("[WARN] No image directory provided")
     
     def __len__(self):
         return len(self.image_files)
@@ -34,7 +38,7 @@ class YoLoDataSet(Dataset):
         image_path = self.image_files[idx]
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
+        # print(f"Image path: {image_path} with shape: {image.shape}")
         # for annotation
         annotation_path = os.path.join(self.annotation_dir, os.path.basename(image_path).replace(".jpg", ".txt"))
         target_encoding = self._get_yolo_encoding(annotation_path, image.shape)
@@ -60,7 +64,8 @@ class YoLoDataSet(Dataset):
             return target_encoding
         
         # calculate the image height width and the grid size based on the image size
-        img_width, img_height = image_size
+        # print(f"Image size: {image_size}")
+        img_width, img_height, _ = image_size
         grid_width = img_width / self.grid_size
         grid_height = img_height / self.grid_size
 
@@ -71,10 +76,10 @@ class YoLoDataSet(Dataset):
                     line = line.strip()
                     if not line:
                         continue
-                    print(f"Line: {line} is being processed")
+                    # print(f"Line: {line} is being processed")
                     class_id, x_center, y_center, width, height = map(float, line.split()) # bounding box parameters 
                     class_id = int(class_id)
-                    print(f"Class ID: {class_id}, X Center: {x_center}, Y Center: {y_center}, Width: {width}, Height: {height}")
+                    # print(f"Class ID: {class_id}, X Center: {x_center}, Y Center: {y_center}, Width: {width}, Height: {height}")
                     # calculate the fractions in the annotation file into the image's scale
                     x_center = x_center * img_width
                     y_center = y_center * img_height
@@ -92,10 +97,10 @@ class YoLoDataSet(Dataset):
                         # convert height and width to cell units
                         width_in_cells = width / grid_width
                         height_in_cells = height / grid_height
-                        print(f"width: {width_in_cells}, height: {height_in_cells}")
-                        print(f"Anchor box {anchor_box_idx}: {anchor_box}")
+                        # print(f"width: {width_in_cells}, height: {height_in_cells}")
+                        # print(f"Anchor box {anchor_box_idx}: {anchor_box}")
                         iou_value = wh_iou((width_in_cells, height_in_cells), anchor_box)
-                        print(f"IoU: {iou_value}")
+                        # print(f"IoU: {iou_value}")
                         if iou_value > best_iou:
                             best_iou = iou_value
                             best_anchor_box_idx = anchor_box_idx
@@ -129,7 +134,7 @@ class YoLoDataSet(Dataset):
                     print(f"Failed to process annotation line/continue :{line}. Exception : {e}")
                     continue
         
-        return torch.tensor(target_encoding)
+        return torch.tensor(target_encoding, dtype=torch.float32)
 
 
         

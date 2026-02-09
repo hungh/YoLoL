@@ -1,10 +1,12 @@
 from . import model_1_train
 from .mobile import mobilenetv2_trainer
+from .yolo import preprocess_yolo
 from pathlib import Path
 
 MODEL_DICT = {
     "SM_2C1M3FC": model_1_train.SAM_Model_1,
-    "MOBILENETV2": mobilenetv2_trainer.MobileNetV2_Trainer
+    "MOBILENETV2": mobilenetv2_trainer.MobileNetV2_Trainer,
+    "PREPROCESS_YOLO": preprocess_yolo.PreprocessYOLO
 }
 
 if __name__ == "__main__":
@@ -33,4 +35,5 @@ if __name__ == "__main__":
 """Usage:
 python -m src.torch_train.cnn SM_2C1M3FC 10 False
 python -m src.torch_train.cnn MOBILENETV2 10 True
+python -m src.torch_train.cnn PREPROCESS_YOLO 10 False
 """
