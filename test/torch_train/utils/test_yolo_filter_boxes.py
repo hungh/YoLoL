@@ -1,7 +1,7 @@
 import pytest
 import torch
 import numpy as np
-from src.torch_train.cnn.utils import yolo_filter_boxes
+from src.torch_train.cnn.utils.yolo_utils import yolo_filter_boxes
 
 class TestYoloFilterBoxes:
     """Test suite for yolo_filter_boxes function"""

@@ -1,7 +1,7 @@
 import pytest
 import torch
 import numpy as np
-from src.torch_train.cnn.utils import yolo_non_max_suppression, iou
+from src.torch_train.cnn.utils.yolo_utils import yolo_non_max_suppression, iou
 
 class TestYoloNonMaxSuppression:
     """Test suite for yolo_non_max_suppression function"""
@@ -28,7 +28,7 @@ class TestYoloNonMaxSuppression:
         boxes = torch.tensor([
             [10, 10, 50, 50],   # Box 1 (higher score)
             [15, 15, 55, 55],   # Box 2 (overlaps, lower score)
-        ])
+        ], dtype=torch.float32)
         classes = torch.tensor([0, 0])  # Same class
         
         result_scores, result_boxes, result_classes = yolo_non_max_suppression(
@@ -48,7 +48,7 @@ class TestYoloNonMaxSuppression:
             [10, 10, 50, 50],   # Box 1 (highest score)
             [15, 15, 55, 55],   # Box 2 (overlaps, lowest score)
             [12, 12, 52, 52],   # Box 3 (overlaps, medium score)
-        ])
+        ], dtype=torch.float32)
         classes = torch.tensor([0, 0, 0])  # Same class
         
         result_scores, result_boxes, result_classes = yolo_non_max_suppression(
@@ -67,7 +67,7 @@ class TestYoloNonMaxSuppression:
         boxes = torch.tensor([
             [10, 10, 50, 50],   # Box 1
             [100, 100, 150, 150],  # Box 2 (no overlap)
-        ])
+        ], dtype=torch.float32)
         classes = torch.tensor([0, 0])  # Same class
         
         result_scores, result_boxes, result_classes = yolo_non_max_suppression(
@@ -90,7 +90,7 @@ class TestYoloNonMaxSuppression:
             [15, 15, 55, 55],   # Class 0 (overlaps with box 1)
             [100, 100, 150, 150],  # Class 1
             [200, 200, 250, 250],  # Class 1
-        ])
+        ], dtype=torch.float32)
         classes = torch.tensor([0, 0, 1, 1])
         
         result_scores, result_boxes, result_classes = yolo_non_max_suppression(
@@ -113,7 +113,7 @@ class TestYoloNonMaxSuppression:
             [200, 200, 250, 250],  # Box 3
             [300, 300, 350, 350],  # Box 4
             [400, 400, 450, 450],  # Box 5
-        ])
+        ], dtype=torch.float32)
         classes = torch.tensor([0, 1, 2, 3, 4])  # Different classes
         
         result_scores, result_boxes, result_classes = yolo_non_max_suppression(
@@ -131,7 +131,7 @@ class TestYoloNonMaxSuppression:
         boxes = torch.tensor([
             [10, 10, 50, 50],   # Box 1
             [12, 12, 52, 52],   # Box 2 (high overlap, IoU > 0.5)
-        ])
+        ], dtype=torch.float32)
         classes = torch.tensor([0, 0])
         
         # Test with strict threshold
