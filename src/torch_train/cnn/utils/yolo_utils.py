@@ -6,6 +6,16 @@ import torchvision
 import torch
 
 
+# iou based on the width and height of the box
+def wh_iou(box_wh, anchor_wh):
+    w1, h1 = box_wh
+    w2, h2 = anchor_wh
+
+    inter = min(w1, w2) * min(h1, h2)
+    union = w1*h1 + w2*h2 - inter
+    return inter / union
+
+# iou based on the coordinates of the box
 def iou(box1, box2):
     """Implement the intersection over union (IoU) between box1 and box2
     
@@ -51,7 +61,7 @@ def scale_boxes(boxes, image_shape):
     box_coords[..., [1, 3]] = torch.clamp(box_coords[..., [1, 3]], 0, height)  # y coordinates
     
     return box_coords
-    
+
 
 def yolo_filter_boxes(boxes, box_confidence, box_class_probs, threshold = .6):
     """Filters YOLO boxes by thresholding on object and class confidence.

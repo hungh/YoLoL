@@ -4,9 +4,16 @@ import os
 import cv2
 import numpy as np
 import torch
+from ..cnn.utils.yolo_utils import wh_iou
+
+ANCHOR_BOXES = [
+        (0.28, 0.22),  # Anchor 0: small objects
+        (0.38, 0.48),  # Anchor 1: medium objects  
+        (0.73, 0.87),  # Anchor 2: large objects
+    ]
 
 class YoLoDataSet(Dataset):
-    def __init__(self, image_dir, annotation_dir, grid_size=19, num_anchors=3, num_classes=68, transform=None):
+    def __init__(self, image_dir=None, annotation_dir=None, grid_size=19, num_anchors=3, num_classes=68, transform=None):
         self.image_dir = image_dir
         self.annotation_dir = annotation_dir
         self.grid_size = grid_size
@@ -14,7 +21,10 @@ class YoLoDataSet(Dataset):
         self.num_classes = num_classes
         self.transform = transform
 
-        self.image_files = glob(os.path.join(self.image_dir, "*.jpg")) + glob(os.path.join(self.image_dir, "*.png"))
+        if self.image_dir is not None:
+            self.image_files = glob(os.path.join(self.image_dir, "*.jpg")) + glob(os.path.join(self.image_dir, "*.png"))
+        else:
+            self.image_files = []
     
     def __len__(self):
         return len(self.image_files)
@@ -56,11 +66,15 @@ class YoLoDataSet(Dataset):
 
         # read annotation file
         with open(annotation_path, 'r') as f:
-            for line in f:
-                anchor_box_idx = 0
+            for line in f:                
                 try:
-                    class_id, x_center, y_center, width, height = map(float, line.strip().split()) # bounding box parameters 
-
+                    line = line.strip()
+                    if not line:
+                        continue
+                    print(f"Line: {line} is being processed")
+                    class_id, x_center, y_center, width, height = map(float, line.split()) # bounding box parameters 
+                    class_id = int(class_id)
+                    print(f"Class ID: {class_id}, X Center: {x_center}, Y Center: {y_center}, Width: {width}, Height: {height}")
                     # calculate the fractions in the annotation file into the image's scale
                     x_center = x_center * img_width
                     y_center = y_center * img_height
@@ -71,6 +85,21 @@ class YoLoDataSet(Dataset):
                     grid_x = int(x_center / grid_width)
                     grid_y = int(y_center / grid_height)
 
+                    best_anchor_box_idx = 0
+                    best_iou = 0
+                    # find the anchor boxes with highest iou with the bounding boxes. NOTE: anchor boxes are defined in grid cell units
+                    for anchor_box_idx, anchor_box in enumerate(ANCHOR_BOXES):
+                        # convert height and width to cell units
+                        width_in_cells = width / grid_width
+                        height_in_cells = height / grid_height
+                        print(f"width: {width_in_cells}, height: {height_in_cells}")
+                        print(f"Anchor box {anchor_box_idx}: {anchor_box}")
+                        iou_value = wh_iou((width_in_cells, height_in_cells), anchor_box)
+                        print(f"IoU: {iou_value}")
+                        if iou_value > best_iou:
+                            best_iou = iou_value
+                            best_anchor_box_idx = anchor_box_idx
+
                     # the grid x, y should be less than the grid size
                     if grid_x >= self.grid_size or grid_y >= self.grid_size:
                         continue
@@ -80,20 +109,20 @@ class YoLoDataSet(Dataset):
                     y_offset = (y_center / grid_height) - grid_y # in float
 
                     # set bounding box parameters
-                    target_encoding[grid_y, grid_x, anchor_box_idx, 0] = x_offset
-                    target_encoding[grid_y, grid_x, anchor_box_idx, 1] = y_offset
-                    target_encoding[grid_y, grid_x, anchor_box_idx, 2] = width / grid_width # to the scale of the grid size
-                    target_encoding[grid_y, grid_x, anchor_box_idx, 3] = height / grid_height
-                    target_encoding[grid_y, grid_x, anchor_box_idx, 4] = 1.0 # confidence (is the class there)
+                    target_encoding[grid_y, grid_x, best_anchor_box_idx, 0] = x_offset
+                    target_encoding[grid_y, grid_x, best_anchor_box_idx, 1] = y_offset
+                    target_encoding[grid_y, grid_x, best_anchor_box_idx, 2] = width / grid_width # to the scale of the grid size
+                    target_encoding[grid_y, grid_x, best_anchor_box_idx, 3] = height / grid_height
+                    target_encoding[grid_y, grid_x, best_anchor_box_idx, 4] = 1.0 # (is the class there)
                     
                     # set class using hot encoding
                     if class_id < self.num_classes:
-                        target_encoding[grid_y, grid_x, anchor_box_idx, 5 + class_id] = 1.0
+                        target_encoding[grid_y, grid_x, best_anchor_box_idx, 5 + class_id] = 1.0
                     else:
                         # log the class id
                         print(f"Class id {class_id} is out of range, skipping")
 
-                    # TODO: will run the Non-Maximum Suppression (NMS) using iou to remove duplicate bounding boxes later  
+                    
                     
 
                 except Exception as e:
