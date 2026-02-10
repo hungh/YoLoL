@@ -3,7 +3,11 @@
 ## Overview
 This project implements a complete YOLO (You Only Look Once) object detection system from scratch, focusing on understanding the architecture and building a working detection pipeline.
 Other Deep Neural Network implementations are also included for comparison and learning purposes, such as Back Prop with Gradient Descent, Batch norm and Optimizers (SGD, Adam, etc.)
- 
+
+Bonus projects:
+- Image classification using PyTorch 
+- American Sign Language recognition using PyTorch 
+
 ## Dataset
 - **Dataset**: YoLo dataset for fruit and vegetable detection
 - **Classes**: 63 different fruit and vegetable classes
