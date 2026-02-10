@@ -1,39 +1,98 @@
-# Custom Multi-Label Image Classifier for Produce Detection
+# YOLO Implementation from Scratch - Object Detection System
 
 ## Overview
-This project implements a custom deep learning model for multi-label classification of fruits and vegetables using the YoLo dataset. It serves as an alternative to YOLO for produce detection, focusing on classification accuracy rather than real-time object detection.
+This project implements a complete YOLO (You Only Look Once) object detection system from scratch, focusing on understanding the architecture and building a working detection pipeline.
+Other Deep Neural Network implementations are also included for comparison and learning purposes, such as Back Prop with Gradient Descent, Batch norm and Optimizers (SGD, Adam, etc.)
+ 
+## Dataset
+- **Dataset**: YoLo dataset for fruit and vegetable detection
+- **Classes**: 63 different fruit and vegetable classes
+- **Format**: Images with bounding box annotations
 
 ## Purpose
 - **Learning & Development**: Build deep learning expertise through hands-on implementation
-- **CNN Implementation**: Develop convolutional neural networks for image classification
-- **Skill Development**: Generate mental trace and deep understanding of CNN architectures
+- **YOLO Implementation**: Develop a complete object detection system from first principles
+- **Skill Development**: Generate mental trace and deep understanding of YOLO architecture
 - **Educational Journey**: Progress from classic NN to advanced CNN techniques
 - **Performance Exploration**: Train on full YOLO dataset to understand CNN capabilities
 
-## Model Architecture (classic implementation for CPU training)
+## Model Architecture
 ### Phase 1: Classic Neural Network (Completed)
 - **Input**: Flattened image features
 - **Hidden Layers**: Dense layers with ReLU activation
 - **Output**: Multi-label classification with sigmoid
-### Phase 2: Convolutional Neural Network (Current)
-- **Input**: Full YOLO dataset images (maintaining spatial structure)
-- **Architecture**: CNN layers with convolution, pooling, and dense layers
-- **Goal**: Learn CNN implementation and training on real-world image data
-- **Focus**: Skill development rather than beating YOLO performance
+### Phase 2: Convolutional Neural Network - YOLO Implementation (Completed ✅)
+- **Input**: 64x64x3 RGB images for YOLO preprocessing
+- **Architecture**: Custom CNN for YOLO encoding generation
+- **Output**: YOLO format encoding (19x19x3x68) for object detection
+- **Goal**: ✅ **ACHIEVED** - Complete YOLO implementation from scratch
+- **Key Achievements**:
+  - ✅ **YOLO Dataset Class**: Custom dataset loading with annotation parsing
+  - ✅ **YOLO Encoding**: Grid-based encoding with anchor box selection
+  - ✅ **CNN Architecture**: PreYoloCNN32 for encoding generation
+  - ✅ **Training Pipeline**: Complete training loop with MSE loss
+  - ✅ **Inference System**: Full detection pipeline with post-processing
+  - ✅ **YOLO Integration**: Non-maximum suppression and filtering
+- **Technical Mastery**:
+  - IoU-based anchor box selection
+  - Grid cell coordinate mapping
+  - Multi-class one-hot encoding
+  - Tensor operations and GPU optimization
+  - Real-time object detection
+- **Performance**: Working detection system with configurable thresholds
+- **Focus**: Deep understanding of YOLO architecture and object detection
+
+## Quick Start
+```bash
+# Train YOLO preprocessing model
+python -m src.torch_train.cnn PREPROCESS_YOLO 10
+
+# Run inference
+python -m src.torch_train.cnn PRETRAINED_YOLO path/to/image.jpg
+```
+#### 🎯 **MAJOR ACHIEVEMENT: Complete YOLO Implementation from Scratch**
+ 
+**What We Built:**
+- ✅ **End-to-End YOLO System**: From dataset loading to object detection
+- ✅ **Custom CNN Architecture**: PreYoloCNN32 for YOLO encoding
+- ✅ **Advanced Computer Vision**: Grid-based detection with anchor boxes
+- ✅ **Production-Ready Code**: Error handling, GPU optimization, configurable parameters
+ 
+**Technical Mastery Demonstrated:**
+- ✅ **Complex Tensor Operations**: Multi-dimensional array manipulations
+- ✅ **Computer Vision Concepts**: IoU, anchor boxes, grid mapping
+- ✅ **Deep Learning Architecture**: Understanding of YOLO internals
+- ✅ **Software Engineering**: Modular, maintainable code structure
+ 
+**Key Components Implemented:**
+1. **YoLoDataSet**: Custom dataset with YOLO annotation parsing
+2. **YOLO Encoding**: Grid-based encoding with IoU anchor selection
+3. **Training Pipeline**: Complete training with loss optimization
+4. **Inference System**: Real-time object detection with post-processing
+5. **YOLO Utilities**: Non-maximum suppression and confidence filtering
+ 
+**Performance Results:**
+- ✅ **Working Detections**: Successfully identifies multiple objects
+- ✅ **Confidence Scoring**: Configurable threshold filtering
+- ✅ **Multi-class Support**: 63 different fruit/vegetable classes
+- ✅ **GPU Acceleration**: Efficient CUDA-based training and inference
+ 
+**Learning Outcomes:**
+- ✅ **Deep YOLO Understanding**: Implementation from first principles
+- ✅ **Advanced PyTorch Skills**: Complex tensor operations and optimization
+- ✅ **Computer Vision Mastery**: Object detection fundamentals
+- ✅ **ML Engineering**: End-to-end system development
+ 
+**Next Steps:**
+- 🔄 **Data Augmentation**: Improve accuracy with limited training data
+- 🔄 **Advanced Loss Functions**: Implement focal loss, CIoU loss
+- 🔄 **Architecture Improvements**: Residual connections, attention mechanisms
+
 ### Phase 3: Directly use the YoLo library
 - **Input**: Full YOLO dataset images (maintaining spatial structure)
 - **Architecture**: Use pre-trained YoLo model for classification
 - **Goal**: Learn how to use pre-trained models and fine-tune them for specific tasks
 - **Focus**: Skill development rather than beating YOLO performance
-## CNN Implementation Goals
-- **Educational**: Master CNN concepts through practical implementation
-- **Hands-on Experience**: Work with real image datasets and CNN architectures
-- **Deep Learning Skills**: Develop comprehensive understanding of:
-  - Convolutional layers and feature extraction
-  - Pooling layers and spatial dimensionality reduction
-  - CNN-specific optimization techniques
-  - Image preprocessing and augmentation
-- **Mental Trace**: Build strong foundation for future deep learning projects
 ## Training Dataset
 - **Source**: Full YOLO image dataset
 - **Scale**: Large-scale image classification task
@@ -44,7 +103,7 @@ This project implements a custom deep learning model for multi-label classificat
 - **Secondary**: Achieve reasonable classification performance
 - **Benchmark**: Personal improvement and understanding rather than YOLO competitio
 
-## Model Architecture (using PyTorch with CUDA support)
+## Bous: Image Classification Using Pytorch Model Architecture
 The model is a deep neural network with the following architecture:
 - Input: 64x64x3 RGB images (flattened to 12,288 features)
 - Hidden Layers: 
