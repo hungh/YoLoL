@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 import cv2
 
+# IMPORTANT: this resizes the image to 64x64 for the preprocessing model. See '''transforms.Lambda(lambda x: cv2.resize(x, (64, 64)))'''
 class PreprocessYOLO(CNN_Model_Trainer):
     def __init__(self, save_path, learning_rate=0.001, batch_size=16, epochs=10, is_gpu_train=True):
         super().__init__(save_path, is_gpu_train)

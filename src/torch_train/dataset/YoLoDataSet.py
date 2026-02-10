@@ -69,6 +69,9 @@ class YoLoDataSet(Dataset):
         grid_width = img_width / self.grid_size
         grid_height = img_height / self.grid_size
 
+        # Store all objects in this grid cell
+        grid_cell_objects = {}  # {anchor_idx: (class_id, x_offset, y_offset, width, height)}
+
         # read annotation file
         with open(annotation_path, 'r') as f:
             for line in f:                
@@ -104,35 +107,41 @@ class YoLoDataSet(Dataset):
                         if iou_value > best_iou:
                             best_iou = iou_value
                             best_anchor_box_idx = anchor_box_idx
-
-                    # the grid x, y should be less than the grid size
-                    if grid_x >= self.grid_size or grid_y >= self.grid_size:
-                        continue
-
-                    # calculate the relative coordinates within grid cell
-                    x_offset = (x_center / grid_width) - grid_x # in float if the offet is zero, the x, y should be at the center of the grid cell
-                    y_offset = (y_center / grid_height) - grid_y # in float
-
-                    # set bounding box parameters
-                    target_encoding[grid_y, grid_x, best_anchor_box_idx, 0] = x_offset
-                    target_encoding[grid_y, grid_x, best_anchor_box_idx, 1] = y_offset
-                    target_encoding[grid_y, grid_x, best_anchor_box_idx, 2] = width / grid_width # to the scale of the grid size
-                    target_encoding[grid_y, grid_x, best_anchor_box_idx, 3] = height / grid_height
-                    target_encoding[grid_y, grid_x, best_anchor_box_idx, 4] = 1.0 # (is the class there)
                     
-                    # set class using hot encoding
-                    if class_id < self.num_classes:
-                        target_encoding[grid_y, grid_x, best_anchor_box_idx, 5 + class_id] = 1.0
-                    else:
-                        # log the class id
-                        print(f"Class id {class_id} is out of range, skipping")
-
-                    
-                    
+                    # Store object in the best anchor
+                    key = (grid_y, grid_x, best_anchor_box_idx)
+                    grid_cell_objects[key] = (class_id, x_center, y_center, width, height)
 
                 except Exception as e:
                     print(f"Failed to process annotation line/continue :{line}. Exception : {e}")
                     continue
+
+                # fill the target encoding with the objects
+            for key, (class_id, x_center, y_center, width, height) in grid_cell_objects.items():
+                anchor_box_idx = key[2]
+                grid_y, grid_x = key[0], key[1]
+                
+                # the grid x, y should be less than the grid size
+                if grid_x >= self.grid_size or grid_y >= self.grid_size:
+                    continue
+
+                # calculate the relative coordinates within grid cell
+                x_offset = (x_center / grid_width) - grid_x # in float if the offet is zero, the x, y should be at the center of the grid cell
+                y_offset = (y_center / grid_height) - grid_y # in float
+
+                # set bounding box parameters
+                target_encoding[grid_y, grid_x, anchor_box_idx, 0] = x_offset
+                target_encoding[grid_y, grid_x, anchor_box_idx, 1] = y_offset
+                target_encoding[grid_y, grid_x, anchor_box_idx, 2] = width / grid_width # to the scale of the grid size
+                target_encoding[grid_y, grid_x, anchor_box_idx, 3] = height / grid_height
+                target_encoding[grid_y, grid_x, anchor_box_idx, 4] = 1.0 # (is the class there)
+                
+                # set class using hot encoding
+                if class_id < self.num_classes:
+                    target_encoding[grid_y, grid_x, anchor_box_idx, 5 + class_id] = 1.0
+                else:
+                    # log the class id
+                    print(f"Class id {class_id} is out of range, skipping")
         
         return torch.tensor(target_encoding, dtype=torch.float32)
 
